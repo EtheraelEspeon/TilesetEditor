@@ -6,8 +6,8 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	/* --- set Palette Editor size --- */
 	paletteEditor.x = 0;
 	paletteEditor.y = 0;
-	paletteEditor.height = windowHeight * PercentPaletteEditorHeight / 5 * 5; // ensure an integer multiple of 5, as the palette is 5 tiles tall
-	paletteEditor.width = paletteEditor.height / 5 * 3;
+	paletteEditor.height = (int)(windowHeight * PercentPaletteEditorHeight) / 5 * 5; // ensure an integer multiple of 5, as the palette is 5 tiles tall
+	paletteEditor.width = (int)paletteEditor.height / 5 * 3;
 
 	/* --- set Color Picker size --- */
 	colorPicker.x = 0;
