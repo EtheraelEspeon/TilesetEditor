@@ -9,7 +9,7 @@ int main() {
 	std::cout << "Gay\n";
 
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-	InitWindow(1280, 720, "Yippee");
+	InitWindow(1280, 720, "Tileset Editor");
 	SetWindowMinSize(640, 360);
 	SetTargetFPS(60);
 
