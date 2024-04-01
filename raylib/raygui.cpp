@@ -1,4 +1,6 @@
 
+#pragma GCC diagnostic ignored "-Wenum-compare"
+
 #include "raygui.h"
 
 /***********************************************************************************
@@ -4516,3 +4518,5 @@ static int GetCodepointNext(const char *text, int *codepointSize)
 #endif      // RAYGUI_STANDALONE
 
 #endif      // RAYGUI_IMPLEMENTATION
+
+#pragma GCC diagnostic warning "-Wenum-compare"
