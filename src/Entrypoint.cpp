@@ -3,6 +3,7 @@
 
 #include "../raylib/raygui.h"
 
+#include "TilesetData.hpp"
 #include "GuiSizeInfo.hpp"
 
 #include "PaletteEditor.hpp"
@@ -29,6 +30,8 @@ int main() {
 	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::TEXT_COLOR_PRESSED, 0x000000FF);
 
 	GuiSetStyle(GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE, 30);
+
+	TilesetData::Initialize();
 
 	PaletteEditor paletteEditor;
 
