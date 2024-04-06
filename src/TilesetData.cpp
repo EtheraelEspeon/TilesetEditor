@@ -15,32 +15,57 @@ void TilesetData::Initialize() {
 	inst = new TilesetData();
 
 	for(int i = 0; i < 15; i++) {
-		SetColor(i, ColorFromHSV((float)i * 360.0 / 15.0, 0.8, 1));
+		SetColor(i + 1, ColorFromHSV((float)i * 360.0 / 15.0, 0.8, 1));
 	}
 
-	inst->tiles.push_back(Tile());
+	Inst()->tiles.push_back(Tile());
 
 	Logger::Message("Initialized new tileset!");	
 }
 
 void TilesetData::DeleteTile(int tileIdx) {
-	inst->tiles.erase(ItrFromTileIdx(tileIdx));
+	Inst()->tiles.erase(ItrFromTileIdx(tileIdx));
 }
 Tile* TilesetData::GetTile(int tileIdx) {
 	return &(*ItrFromTileIdx(tileIdx));
 }
 
 void TilesetData::SetColor(int paletteIdx, Color color) {
-	if(inst == nullptr) Logger::Error("TilesetData unintialized");
-	inst->palette[paletteIdx] = color;
+	if(paletteIdx == 0) {
+		Logger::Warning("Tried to set index zero of palette");
+		return;
+	}
+
+	Inst()->palette[paletteIdx - 1] = color;
 }
 Color TilesetData::GetColor(int paletteIdx) {
-	if(inst == nullptr) Logger::Error("TilesetData unintialized");
-	return inst->palette[paletteIdx];
+	if(paletteIdx == 0) return {0, 0, 0, 0};
+	return Inst()->palette[paletteIdx - 1];
+}
+
+Color TilesetData::GetActiveColor() {
+	return GetColor(Inst()->activeColorIdx);
+}
+int TilesetData::GetActiveColorIdx() {
+	return Inst()->activeColorIdx;
+}
+void TilesetData::SetActiveColor(int colorIdx) {
+	Inst()->activeColorIdx = colorIdx;
+}
+
+Tile* TilesetData::GetActiveTile() {
+	return GetTile(Inst()->activeTileIdx);
+}
+void TilesetData::SetActiveTile(int tileIdx) {
+	Inst()->activeTileIdx = tileIdx;
+}
+
+TilesetData* TilesetData::Inst() {
+	if(!inst) Logger::Error("TilesetData unintialized");
+	return inst;
 }
 
 std::list<Tile>::iterator TilesetData::ItrFromTileIdx(int tileIdx) {
-	if(inst == nullptr) Logger::Error("TilesetData unintialized");
 	auto itr = inst->tiles.begin();
 	std::advance(itr, tileIdx);
 	return itr;
