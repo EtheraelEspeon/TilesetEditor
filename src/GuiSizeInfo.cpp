@@ -27,9 +27,9 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	/* --- set Tile Editor size --- */
 	int allocatedHeightTE = windowHeight - MenuBarHeight;
 	int allocatedWidthTE = tileSelector.x - paletteEditor.width - 2 * Padding; // wrong
-	int maxMultiplesOf16 = std::min(allocatedWidthTE / 16, allocatedHeightTE / 16);
+	int maxMultiplesOf32 = std::min(allocatedWidthTE / 32, allocatedHeightTE / 32); // 32 for background checkerboard
 	
-	tileEditor.width = maxMultiplesOf16 * 16;
+	tileEditor.width = maxMultiplesOf32 * 32;
 	tileEditor.height = tileEditor.width;
 	tileEditor.y = MenuBarHeight + (allocatedHeightTE - tileEditor.height) / 2;
 	tileEditor.x = paletteEditor.width + Padding + (allocatedWidthTE - tileEditor.width) / 2;
