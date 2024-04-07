@@ -2,16 +2,35 @@
 
 #include <array>
 #include <list>
+#include <vector>
 #include <cstdint>
 
 #include "../raylib/raylib.h"
 
+typedef uint8_t ColorIdx;
+
 struct Tile {
 	Tile();
 
-	std::array<uint8_t, 16 * 16> idxData;
-	void SetPixel(int x, int y, uint8_t paletteIdx);
-	uint8_t GetPixel(int x, int y);
+	void SetPixel(int x, int y, ColorIdx paletteIdx);
+	ColorIdx GetPixel(int x, int y);
+
+	void CloseCurrentChangeFrame();
+	void RevertChangesInFrame();
+
+private:
+	struct Change {
+		int idxChanged;
+		ColorIdx prevColor;
+
+		bool operator== (const Change& rhs);
+		bool operator!= (const Change& rhs);
+	};
+
+	std::array<ColorIdx, 16 * 16> colorData;
+
+	std::vector<int> changeFrameBeginnings = {0};
+	std::vector<Change> changeHistory;
 };
 
 // Singleton

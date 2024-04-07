@@ -3,23 +3,24 @@
 #include "Logger.hpp"
 
 void TileEditor::Update(Rectangle size) {
-	
-	uint64_t activeColor = ColorToInt(TilesetData::GetActiveColor());
-	
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_NORMAL, 0x00000000);
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_FOCUSED, activeColor);
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_PRESSED, activeColor);
+	// check hotkeys
+	if(IsKeyDown(KEY_LEFT_CONTROL)) {
+		if(IsKeyPressed(KEY_Z)) {
+			TilesetData::GetActiveTile()->RevertChangesInFrame();
+		}
+	}
 
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_COLOR_NORMAL, 0x00000000);
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_COLOR_FOCUSED, 0x00000000);
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_COLOR_PRESSED, 0x00000000);
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_WIDTH, 4);
+	// delete old changes on the rising edge of a new erase or draw action
+	if(IsMouseButtonPressed(0) || IsMouseButtonPressed(1)) {
+		TilesetData::GetActiveTile()->CloseCurrentChangeFrame();
+	}
 
 	int hStep = size.width / 16;
 	int vStep = size.height / 16;
 	int hStepHalf = hStep / 2;
 	int vStepHalf = vStep / 2;
 	
+	// draw background checkerboard
 	for(int y = 0; y < 32; y++) {
 		for(int x = 0; x < 32; x++) {
 			Rectangle bounds;
@@ -34,11 +35,10 @@ void TileEditor::Update(Rectangle size) {
 		}
 	}
 
+	// draw sprite and paint
 	for(int y = 0; y < 16; y++) {
 		for(int x = 0; x < 16; x++) {
 			Tile* activeTile = TilesetData::GetActiveTile();
-			int colorIdx = activeTile->GetPixel(x, y);
-			Color color = TilesetData::GetColor(colorIdx);
 
 			Rectangle bounds;
 			bounds.x = size.x + hStep * x;
@@ -46,11 +46,20 @@ void TileEditor::Update(Rectangle size) {
 			bounds.width = hStep;
 			bounds.height = vStep;
 
-			DrawRectangleRec(bounds, color);
+			Vector2 mousePos = GetMousePosition();
+			bool mouseIsOnTile = mousePos.x >= bounds.x && mousePos.x <= bounds.x + bounds.width && mousePos.y >= bounds.y && mousePos.y <= bounds.y + bounds.height;
+			bool leftClick = IsMouseButtonDown(0);
+			bool rightClick = IsMouseButtonDown(1);
 
-			if(GuiButton(bounds, "")) activeTile->SetPixel(x, y, TilesetData::GetActiveColorIdx());
+			if(mouseIsOnTile && leftClick) activeTile->SetPixel(x, y, TilesetData::GetActiveColorIdx());
+			if(mouseIsOnTile && rightClick) activeTile->SetPixel(x, y, 0); 
+
+			if(mouseIsOnTile) {
+				// make the color preview invisible when erasing
+				if(!rightClick) DrawRectangleRec(bounds, TilesetData::GetActiveColor());
+			}
+			else DrawRectangleRec(bounds, TilesetData::GetColor(activeTile->GetPixel(x, y)));
 		}
 	}
-
 
 }
