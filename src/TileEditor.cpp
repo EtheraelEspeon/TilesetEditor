@@ -15,6 +15,10 @@ void TileEditor::Update(Rectangle size) {
 		TilesetData::GetActiveTile()->CloseCurrentChangeFrame();
 	}
 
+	Vector2 mousePos = GetMousePosition();
+	if(!PointInRec(mousePos, size)) return;
+	/* ----- The following should only happen when the user is clicking on the tile editor ----- */
+
 	int hStep = size.width / 16;
 	int vStep = size.height / 16;
 	int hStepHalf = hStep / 2;
@@ -46,13 +50,27 @@ void TileEditor::Update(Rectangle size) {
 			bounds.width = hStep;
 			bounds.height = vStep;
 
-			Vector2 mousePos = GetMousePosition();
-			bool mouseIsOnTile = mousePos.x >= bounds.x && mousePos.x <= bounds.x + bounds.width && mousePos.y >= bounds.y && mousePos.y <= bounds.y + bounds.height;
-			bool leftClick = IsMouseButtonDown(0);
-			bool rightClick = IsMouseButtonDown(1);
+			bool mouseIsOnTile = PointInRec(mousePos, bounds);
+			bool leftClick = IsMouseButtonDown(0) && !IsMouseButtonPressed(0);
+			bool rightClick = IsMouseButtonDown(1) && !IsMouseButtonPressed(1);
 
-			if(mouseIsOnTile && leftClick) activeTile->SetPixel(x, y, TilesetData::GetActiveColorIdx());
-			if(mouseIsOnTile && rightClick) activeTile->SetPixel(x, y, 0); 
+			// paint
+			if(leftClick || rightClick) {
+				ColorIdx drawColor;
+				if(leftClick)  drawColor = TilesetData::GetActiveColorIdx();
+				if(rightClick) drawColor = 0;
+
+				// draw line
+				Vector2 mouseDeltaBetweenFrames = GetMouseDelta();
+				Vector2 mouseTilePos = WindowPosToTilePos(mousePos, size);
+				Vector2 prevMouseTilePos = WindowPosToTilePos({mousePos.x - mouseDeltaBetweenFrames.x, mousePos.y - mouseDeltaBetweenFrames.y}, size);
+
+				auto linePositions = LineBetween(mouseTilePos, prevMouseTilePos);
+
+				for(auto p : linePositions) {
+					TilesetData::GetActiveTile()->SetPixel(p.x, p.y, drawColor);
+				}
+			}
 
 			if(mouseIsOnTile) {
 				// make the color preview invisible when erasing
@@ -62,4 +80,55 @@ void TileEditor::Update(Rectangle size) {
 		}
 	}
 
+}
+
+int TileEditor::sign(int x) {
+	if(x < 0) return -1;
+	if(x > 0) return 1;
+	if(x == 0) return 0;
+	return 0;
+}
+Vector2 TileEditor::WindowPosToTilePos(Vector2 windowPos, Rectangle tileRegionSize) {
+	Vector2 tilePos = windowPos; // tile that the mouse is over
+	tilePos.x -= tileRegionSize.x;
+	tilePos.y -= tileRegionSize.y;
+	tilePos.x /= (tileRegionSize.width / 16);
+	tilePos.y /= (tileRegionSize.height / 16);
+
+	if      (tilePos.x < 0)  tilePos.x = 0;
+	else if (tilePos.x > 15) tilePos.x = 15;
+	if      (tilePos.y < 0)  tilePos.y = 0;
+	else if (tilePos.y > 15) tilePos.y = 15;
+
+	return tilePos;
+}
+bool TileEditor::PointInRec(Vector2 point, Rectangle rec) {
+	return point.x > rec.x && point.y > rec.y && point.x < (rec.x + rec.width) && point.y < (rec.y + rec.height);
+}
+
+std::vector<Vector2> TileEditor::LineBetween(Vector2 to, Vector2 from) {
+	int dx, dy;
+	dx = to.x - from.x;
+	dy = to.y - from.y;
+	
+	std::vector<Vector2> linePositions = {from};
+	
+	while(dx != 0 || dy != 0) {
+		auto prevLinePos = linePositions.back();
+		if(std::abs(dx) == std::abs(dy)) {
+			linePositions.push_back({prevLinePos.x + sign(dx), prevLinePos.y + sign(dy)});
+			dx -= sign(dx);
+			dy -= sign(dy);
+		}
+		else if(std::abs(dx) > std::abs(dy)) {
+			linePositions.push_back({prevLinePos.x + sign(dx), prevLinePos.y});
+			dx -= sign(dx);
+		}
+		else {
+			linePositions.push_back({prevLinePos.x, prevLinePos.y + sign(dy)});
+			dy -= sign(dy);
+		}
+	}
+
+	return linePositions;
 }
