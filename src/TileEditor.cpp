@@ -2,6 +2,8 @@
 
 #include "Logger.hpp"
 
+#include <set>
+
 void TileEditor::Update(Rectangle size) {
 	// check hotkeys
 	if(IsKeyDown(KEY_LEFT_CONTROL)) {
@@ -14,10 +16,6 @@ void TileEditor::Update(Rectangle size) {
 	if(IsMouseButtonPressed(0) || IsMouseButtonPressed(1)) {
 		TilesetData::GetActiveTile()->CloseCurrentChangeFrame();
 	}
-
-	Vector2 mousePos = GetMousePosition();
-	if(!PointInRec(mousePos, size)) return;
-	/* ----- The following should only happen when the user is clicking on the tile editor ----- */
 
 	int hStep = size.width / 16;
 	int vStep = size.height / 16;
@@ -39,10 +37,42 @@ void TileEditor::Update(Rectangle size) {
 		}
 	}
 
-	// draw sprite and paint
+	// paint
+	std::set<std::pair<int, int>> reservedPixels = {}; // pixels that wont be drawn when the sprite is drawn
+	Vector2 mousePos = GetMousePosition();
+	if(PointInRec(mousePos, size)) {
+		bool leftClick = IsMouseButtonDown(0) && !IsMouseButtonPressed(0);
+		bool rightClick = IsMouseButtonDown(1) && !IsMouseButtonPressed(1);
+		bool userIsInteracting = leftClick || rightClick;
+
+		Vector2 mouseTilePos = WindowPosToTilePos(mousePos, size);
+		ColorIdx cursorColor = rightClick ? 0 : TilesetData::GetActiveColorIdx();
+
+		// paint
+		if(userIsInteracting) {
+
+			Vector2 mouseDeltaBetweenFrames = GetMouseDelta();
+			Vector2 prevMouseTilePos = WindowPosToTilePos({mousePos.x - mouseDeltaBetweenFrames.x, mousePos.y - mouseDeltaBetweenFrames.y}, size);
+
+			// paint line
+			auto linePositions = LineBetween(mouseTilePos, prevMouseTilePos);
+			for(auto p : linePositions) {
+				TilesetData::GetActiveTile()->SetPixel(p.x, p.y, cursorColor);
+			}
+		}
+
+		// draw brush cursor
+		DrawRectangleRec(GetPixelBounds(mouseTilePos, size), TilesetData::GetColor(cursorColor));
+		reservedPixels.insert({mouseTilePos.x, mouseTilePos.y});
+	}
+
+	// draw sprite
 	for(int y = 0; y < 16; y++) {
 		for(int x = 0; x < 16; x++) {
-			Tile* activeTile = TilesetData::GetActiveTile();
+			
+			if(reservedPixels.contains(std::pair<int, int>{x, y})) continue; 
+			
+			Color color = TilesetData::GetColor(TilesetData::GetActiveTile()->GetPixel(x, y));
 
 			Rectangle bounds;
 			bounds.x = size.x + hStep * x;
@@ -50,33 +80,7 @@ void TileEditor::Update(Rectangle size) {
 			bounds.width = hStep;
 			bounds.height = vStep;
 
-			bool mouseIsOnTile = PointInRec(mousePos, bounds);
-			bool leftClick = IsMouseButtonDown(0) && !IsMouseButtonPressed(0);
-			bool rightClick = IsMouseButtonDown(1) && !IsMouseButtonPressed(1);
-
-			// paint
-			if(leftClick || rightClick) {
-				ColorIdx drawColor;
-				if(leftClick)  drawColor = TilesetData::GetActiveColorIdx();
-				if(rightClick) drawColor = 0;
-
-				// draw line
-				Vector2 mouseDeltaBetweenFrames = GetMouseDelta();
-				Vector2 mouseTilePos = WindowPosToTilePos(mousePos, size);
-				Vector2 prevMouseTilePos = WindowPosToTilePos({mousePos.x - mouseDeltaBetweenFrames.x, mousePos.y - mouseDeltaBetweenFrames.y}, size);
-
-				auto linePositions = LineBetween(mouseTilePos, prevMouseTilePos);
-
-				for(auto p : linePositions) {
-					TilesetData::GetActiveTile()->SetPixel(p.x, p.y, drawColor);
-				}
-			}
-
-			if(mouseIsOnTile) {
-				// make the color preview invisible when erasing
-				if(!rightClick) DrawRectangleRec(bounds, TilesetData::GetActiveColor());
-			}
-			else DrawRectangleRec(bounds, TilesetData::GetColor(activeTile->GetPixel(x, y)));
+			DrawRectangleRec(bounds, color);
 		}
 	}
 
@@ -104,6 +108,22 @@ Vector2 TileEditor::WindowPosToTilePos(Vector2 windowPos, Rectangle tileRegionSi
 }
 bool TileEditor::PointInRec(Vector2 point, Rectangle rec) {
 	return point.x > rec.x && point.y > rec.y && point.x < (rec.x + rec.width) && point.y < (rec.y + rec.height);
+}
+Rectangle TileEditor::GetPixelBounds(Vector2 tilePos, Rectangle tileRegionSize) {
+	
+	// floor values
+	tilePos.x = (int)tilePos.x;
+	tilePos.y = (int)tilePos.y;
+
+	int step = tileRegionSize.width / 16;
+	
+	Rectangle bounds;
+	bounds.x = tilePos.x * step + tileRegionSize.x;
+	bounds.y = tilePos.y * step + tileRegionSize.y;
+	bounds.width = step;
+	bounds.height = step;
+
+	return bounds;
 }
 
 std::vector<Vector2> TileEditor::LineBetween(Vector2 to, Vector2 from) {

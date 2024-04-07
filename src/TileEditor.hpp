@@ -16,6 +16,7 @@ private:
 	int sign(int x);
 	Vector2 WindowPosToTilePos(Vector2 windowPos, Rectangle tileRegionSize);
 	bool PointInRec(Vector2 point, Rectangle rec);
+	Rectangle GetPixelBounds(Vector2 tilePosition, Rectangle tileRegionSize);
 
 	// in tile coordinates
 	std::vector<Vector2> LineBetween(Vector2 to, Vector2 from);
