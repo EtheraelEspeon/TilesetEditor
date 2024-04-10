@@ -50,7 +50,7 @@ private:
 		virtual void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) = 0;
 	};
 
-	Tool* tool = nullptr;
+	Tool* tool = nullptr; // Should never be null. Is initialized on object creation
 
 	struct Brush : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;

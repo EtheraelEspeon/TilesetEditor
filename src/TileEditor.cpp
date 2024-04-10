@@ -160,11 +160,11 @@ void TileEditor::SetTool(ToolType toolType) {
 	if(!tool) delete tool;
 	switch(toolType) {
 		case(ToolType::Brush):
-		tool = new Brush();
-		break;
+			tool = new Brush();
+			break;
 		default:
-		tool = nullptr;
-		Logger::Error("Tried to set invalid tool type");
+			tool = nullptr;
+			Logger::Error("Tried to set invalid tool type");
 	}
 }
 
