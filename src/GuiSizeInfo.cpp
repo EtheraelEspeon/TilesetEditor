@@ -2,12 +2,29 @@
 #include "GuiSizeInfo.hpp"
 
 GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
-	
+	/* --- set left region size --- */
+	leftRegion.x = 0;
+	leftRegion.y = 0;
+	leftRegion.width = (int)(windowHeight * PercentLeftRegionWidth) / 3 * 3; // ensure an integer multiple of 3 for the palette editor later
+	leftRegion.height = windowHeight;
+
+	/* --- set right region size --- */
+	rightRegion.y = 0;
+	rightRegion.width = windowWidth * PercentRightRegionWidth; // TODO: Will need to round to an integer multiple of something here later, once tile selector is implemented
+	rightRegion.height = windowHeight;
+	rightRegion.x = windowWidth - rightRegion.width;
+
+	/* --- set center region size --- */
+	centerRegion.x = leftRegion.width;
+	centerRegion.y = 0;
+	centerRegion.width = windowWidth - leftRegion.width - rightRegion.width;
+	centerRegion.height = windowHeight;
+
 	/* --- set Palette Editor size --- */
 	paletteEditor.x = 0;
 	paletteEditor.y = 0;
-	paletteEditor.height = (int)(windowHeight * PercentPaletteEditorHeight) / 5 * 5; // ensure an integer multiple of 5, as the palette is 5 tiles tall
-	paletteEditor.width = (int)paletteEditor.height / 5 * 3;
+	paletteEditor.width = leftRegion.width;
+	paletteEditor.height = paletteEditor.width / 3 * 5;
 
 	/* --- set Color Picker size --- */
 	colorPicker.x = 0;
@@ -16,30 +33,28 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	colorPicker.width = paletteEditor.width;
 
 	/* --- set Tile Selector size --- */
-	float maxPixelsPerTile = (windowHeight - (TargetNumberOfDisplayedTiles - 1) * TileSelectorSpacing) / (float)TargetNumberOfDisplayedTiles; // exact amount of pixels
-	int pixelsPerTile = (int)maxPixelsPerTile / 16 * 16; // round down to nearest multiple of 16 pixels;
-	
-	tileSelector.width = pixelsPerTile + 2 * TileSelectorSpacing;
-	tileSelector.height = windowHeight;
-	tileSelector.x = windowWidth - tileSelector.width;
-	tileSelector.y = 0;
+	tileSelector = rightRegion;
+
+	/* --- set Menu Bar size --- */
+	menuBar.width = centerRegion.width;
+	menuBar.height = MenuBarHeight;
+	menuBar.x = paletteEditor.width;
+	menuBar.y = 0;
 
 	/* --- set Tile Editor size --- */
-	int allocatedHeightTE = windowHeight - MenuBarHeight;
-	int allocatedWidthTE = tileSelector.x - paletteEditor.width - 2 * Padding; // wrong
+	int allocatedHeightTE = centerRegion.height - menuBar.height;
+	int allocatedWidthTE = centerRegion.width - 2 * Padding;
 	int maxMultiplesOf32 = std::min(allocatedWidthTE / 32, allocatedHeightTE / 32); // 32 for background checkerboard
 	
 	tileEditor.width = maxMultiplesOf32 * 32;
 	tileEditor.height = tileEditor.width;
 	tileEditor.y = MenuBarHeight + (allocatedHeightTE - tileEditor.height) / 2;
 	tileEditor.x = paletteEditor.width + Padding + (allocatedWidthTE - tileEditor.width) / 2;
-
-	/* --- set Menu Bar size --- */
-	menuBar.width = tileSelector.x - paletteEditor.width;
-	menuBar.height = MenuBarHeight;
-	menuBar.x = paletteEditor.width;
-	menuBar.y = 0;
 }
+
+Rectangle GuiSizeInfo::LeftRegion()   const { return leftRegion; }
+Rectangle GuiSizeInfo::CenterRegion() const { return centerRegion; }
+Rectangle GuiSizeInfo::RightRegion()  const { return rightRegion; }
 
 Rectangle GuiSizeInfo::TileEditor()    const { return tileEditor; }
 Rectangle GuiSizeInfo::PaletteEditor() const { return paletteEditor; }
