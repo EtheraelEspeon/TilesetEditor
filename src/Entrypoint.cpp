@@ -7,6 +7,7 @@
 #include "GuiSizeInfo.hpp"
 
 #include "PaletteEditor.hpp"
+#include "ColorPicker.hpp"
 #include "TileEditor.hpp"
 
 int main() {
@@ -18,6 +19,7 @@ int main() {
 	TilesetData::Initialize();
 
 	PaletteEditor paletteEditor;
+	ColorPicker colorPicker;
 	TileEditor tileEditor;
 
 	while(!WindowShouldClose()) {
@@ -32,7 +34,10 @@ int main() {
 		DrawRectangleRec(info.MenuBar(), WHITE);
 
 		paletteEditor.Update(info.PaletteEditor());
+		colorPicker.Update(info.ColorPicker());
+		// tileSelector
 		tileEditor.Update(info.TileEditor());
+		// toolBar
 
 		/*
 		Draw Order:
