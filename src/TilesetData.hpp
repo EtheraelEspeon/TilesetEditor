@@ -41,12 +41,12 @@ public:
 	static void DeleteTile(int tileIdx);
 	static Tile* GetTile(int tileIdx);
 
-	static Color GetColor(int paletteIdx);
-	static void SetColor(int paletteIdx, Color color);
+	static Color GetColor(ColorIdx colorIdx);
+	static void SetColor(ColorIdx colorIdx, Color color);
 	
 	static Color GetActiveColor();
 	static int GetActiveColorIdx();
-	static void SetActiveColor(int colorIdx);
+	static void SetActiveColor(ColorIdx colorIdx);
 
 	static Tile* GetActiveTile();
 	static void SetActiveTile(int tileIdx);

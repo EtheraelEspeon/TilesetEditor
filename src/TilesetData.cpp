@@ -65,17 +65,17 @@ Tile* TilesetData::GetTile(int tileIdx) {
 	return &(*ItrFromTileIdx(tileIdx));
 }
 
-void TilesetData::SetColor(int paletteIdx, Color color) {
-	if(paletteIdx == 0) {
+void TilesetData::SetColor(ColorIdx colorIdx, Color color) {
+	if(colorIdx == 0) {
 		Logger::Warning("Tried to set index zero of palette");
 		return;
 	}
 
-	Inst()->palette[paletteIdx - 1] = color;
+	Inst()->palette[colorIdx - 1] = color;
 }
-Color TilesetData::GetColor(int paletteIdx) {
-	if(paletteIdx == 0) return {0, 0, 0, 0};
-	return Inst()->palette[paletteIdx - 1];
+Color TilesetData::GetColor(ColorIdx colorIdx) {
+	if(colorIdx == 0) return {0, 0, 0, 0};
+	return Inst()->palette[colorIdx - 1];
 }
 
 Color TilesetData::GetActiveColor() {
@@ -84,7 +84,7 @@ Color TilesetData::GetActiveColor() {
 int TilesetData::GetActiveColorIdx() {
 	return Inst()->activeColorIdx;
 }
-void TilesetData::SetActiveColor(int colorIdx) {
+void TilesetData::SetActiveColor(ColorIdx colorIdx) {
 	Inst()->activeColorIdx = colorIdx;
 }
 
