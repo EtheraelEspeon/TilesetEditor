@@ -5,7 +5,8 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	/* --- set left region size --- */
 	leftRegion.x = 0;
 	leftRegion.y = 0;
-	leftRegion.width = (int)(windowHeight * PercentLeftRegionWidth) / 3 * 3; // ensure an integer multiple of 3 for the palette editor later
+	leftRegion.width = windowWidth * PercentLeftRegionWidth;
+	leftRegion.width = (leftRegion.width - 2 * LeftRegionPadding) / 3 * 3 + 2 * LeftRegionPadding; // ensure an integer multiple of 3 for the palette editor later
 	leftRegion.height = windowHeight;
 
 	/* --- set right region size --- */
@@ -21,15 +22,15 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	centerRegion.height = windowHeight;
 
 	/* --- set Palette Editor size --- */
-	paletteEditor.x = 0;
-	paletteEditor.y = 0;
-	paletteEditor.width = leftRegion.width;
+	paletteEditor.x = LeftRegionPadding;
+	paletteEditor.y = LeftRegionPadding;
+	paletteEditor.width = leftRegion.width - 2 * LeftRegionPadding;
 	paletteEditor.height = paletteEditor.width / 3 * 5;
 
 	/* --- set Color Picker size --- */
-	colorPicker.x = 0;
-	colorPicker.y = paletteEditor.height + Padding;
-	colorPicker.height = windowHeight - colorPicker.y;
+	colorPicker.x = LeftRegionPadding;
+	colorPicker.y = paletteEditor.y + paletteEditor.height + LeftRegionPadding;
+	colorPicker.height = windowHeight - colorPicker.y - LeftRegionPadding;
 	colorPicker.width = paletteEditor.width;
 
 	/* --- set Tile Selector size --- */
@@ -38,18 +39,18 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	/* --- set Menu Bar size --- */
 	menuBar.width = centerRegion.width;
 	menuBar.height = MenuBarHeight;
-	menuBar.x = paletteEditor.width;
+	menuBar.x = leftRegion.width;
 	menuBar.y = 0;
 
 	/* --- set Tile Editor size --- */
 	int allocatedHeightTE = centerRegion.height - menuBar.height;
-	int allocatedWidthTE = centerRegion.width - 2 * Padding;
+	int allocatedWidthTE = centerRegion.width - 2 * CenterRegionPadding;
 	int maxMultiplesOf32 = std::min(allocatedWidthTE / 32, allocatedHeightTE / 32); // 32 for background checkerboard
 	
 	tileEditor.width = maxMultiplesOf32 * 32;
 	tileEditor.height = tileEditor.width;
 	tileEditor.y = MenuBarHeight + (allocatedHeightTE - tileEditor.height) / 2;
-	tileEditor.x = paletteEditor.width + Padding + (allocatedWidthTE - tileEditor.width) / 2;
+	tileEditor.x = leftRegion.width + CenterRegionPadding + (allocatedWidthTE - tileEditor.width) / 2;
 }
 
 Rectangle GuiSizeInfo::LeftRegion()   const { return leftRegion; }
