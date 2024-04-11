@@ -6,6 +6,7 @@
 #include "TilesetData.hpp"
 #include "GuiSizeInfo.hpp"
 
+#include "Background.hpp"
 #include "PaletteEditor.hpp"
 #include "ColorPicker.hpp"
 #include "TileEditor.hpp"
@@ -13,7 +14,7 @@
 int main() {
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(1280, 720, "Tileset Editor");
-	SetWindowMinSize(640, 360);
+	SetWindowMinSize(848, 480);
 	SetTargetFPS(60);
 
 	TilesetData::Initialize();
@@ -27,10 +28,15 @@ int main() {
 		ClearBackground(BLACK);
 
 		GuiSizeInfo info = GuiSizeInfo(GetScreenWidth(), GetScreenHeight());
-		DrawRectangleRec(info.PaletteEditor(), GREEN);
-		DrawRectangleRec(info.ColorPicker(), BLUE);
-		DrawRectangleRec(info.TileEditor(), RED);
-		DrawRectangleRec(info.TileSelector(), YELLOW);
+		
+		Background::DrawLeftRegion(info.LeftRegion());
+		Background::DrawCenterRegion(info.CenterRegion());
+		Background::DrawRightRegion(info.RightRegion());
+		
+		//DrawRectangleRec(info.PaletteEditor(), GREEN);
+		//DrawRectangleRec(info.ColorPicker(), BLUE);
+		//DrawRectangleRec(info.TileEditor(), RED);
+		//DrawRectangleRec(info.TileSelector(), YELLOW);
 		DrawRectangleRec(info.MenuBar(), WHITE);
 
 		paletteEditor.Update(info.PaletteEditor());
