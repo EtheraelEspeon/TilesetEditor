@@ -43,9 +43,15 @@ void TileEditor::Update(Rectangle size) {
 
 	// paint
 	std::set<TilePos> reservedPixels = {}; // pixels that wont be drawn when the sprite is drawn
-	if(PointInRec(GetMousePosition(), size)) {
+	if(!pressBeganOutsideEditorRegion && PointInRec(GetMousePosition(), size)) {
 		tool->Paint(activeTile, &reservedPixels, size);
 	}
+	// If the mouse is outside the draw region and the user presses a mouse button, deactivate painting until they release it 
+	else if(IsMouseButtonPressed(0) || IsMouseButtonPressed(1)) {
+		pressBeganOutsideEditorRegion = true;
+	}
+	// reset this as soon as the user releases both mouse buttons.
+	pressBeganOutsideEditorRegion &= IsMouseButtonDown(0) || IsMouseButtonDown(1);
 
 	// draw sprite
 	for(int y = 0; y < 16; y++) {

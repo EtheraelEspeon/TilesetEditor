@@ -17,6 +17,8 @@ public:
 
 private:
 
+	bool pressBeganOutsideEditorRegion = false;
+
 	struct TilePos {
 		TilePos(Vector2 v);
 		TilePos(int x, int y);
