@@ -27,9 +27,15 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	paletteEditor.width = leftRegion.width - 2 * LeftRegionPadding;
 	paletteEditor.height = paletteEditor.width / 3 * 5;
 
+	/* --- set Tool Bar size --- */
+	toolBar.x = LeftRegionPadding;
+	toolBar.y = paletteEditor.y + paletteEditor.height + LeftRegionPadding;
+	toolBar.height = ToolBarHeight;
+	toolBar.width = leftRegion.width - 2 * LeftRegionPadding;
+
 	/* --- set Color Picker size --- */
 	colorPicker.x = LeftRegionPadding;
-	colorPicker.y = paletteEditor.y + paletteEditor.height + LeftRegionPadding;
+	colorPicker.y = toolBar.y + toolBar.height + LeftRegionPadding;
 	colorPicker.height = windowHeight - colorPicker.y - LeftRegionPadding;
 	colorPicker.width = paletteEditor.width;
 
@@ -59,6 +65,7 @@ Rectangle GuiSizeInfo::RightRegion()  const { return rightRegion; }
 
 Rectangle GuiSizeInfo::TileEditor()    const { return tileEditor; }
 Rectangle GuiSizeInfo::PaletteEditor() const { return paletteEditor; }
+Rectangle GuiSizeInfo::ToolBar()       const { return toolBar; }
 Rectangle GuiSizeInfo::ColorPicker()   const { return colorPicker; }
 Rectangle GuiSizeInfo::TileSelector()  const { return tileSelector; }
 Rectangle GuiSizeInfo::MenuBar()       const { return menuBar; }
