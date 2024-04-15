@@ -116,26 +116,43 @@ Rectangle TileEditor::GetPixelBounds(TilePos tilePos, Rectangle tileRegionSize) 
 }
 
 std::vector<TileEditor::TilePos> TileEditor::LineBetween(TilePos to, TilePos from) {
-	int dx, dy;
-	dx = to.x - from.x;
-	dy = to.y - from.y;
+	// Not literal distance, but the value this returns monotonically increases as you stray farther from the line
+	const auto DistanceToLine = [to, from](Vector2 pos) {
+		Vector2 dir = {(float)(to.x - from.x), (float)(to.y - from.y)};
+		return std::abs((pos.y - to.y) * dir.x - (pos.x - to.x) * dir.y);
+	};
 
 	std::vector<TilePos> linePositions = {from};
+
+	int xDir, yDir;
+	xDir = sign(to.x - from.x);
+	yDir = sign(to.y - from.y);
+
+	while(linePositions.back() != to) {
+		Vector2 currentPos = {(float)(linePositions.back().x), (float)(linePositions.back().y)};
+
+		Vector2 moveX = {currentPos.x + xDir, currentPos.y};
+		Vector2 moveY = {currentPos.x, currentPos.y + yDir};
+		Vector2 moveBoth = {currentPos.x + xDir, currentPos.y + yDir};	
 	
-	while(dx != 0 || dy != 0) {
-		auto prevLinePos = linePositions.back();
-		if(std::abs(dx) == std::abs(dy)) {
-			linePositions.push_back(TilePos{prevLinePos.x + sign(dx), prevLinePos.y + sign(dy)});
-			dx -= sign(dx);
-			dy -= sign(dy);
+		std::array<std::pair<Vector2, float>, 3> moveOptions = {
+			std::pair<Vector2, float>{moveX, DistanceToLine(moveX)},
+			std::pair<Vector2, float>{moveY, DistanceToLine(moveY)},
+			std::pair<Vector2, float>{moveBoth, DistanceToLine(moveBoth)}
+		};
+
+		int minIdx = -1;
+		for(int i = 0; i < moveOptions.size(); i++) {
+			if(moveOptions[i].first.x == currentPos.x && moveOptions[i].first.y == currentPos.y) continue; // will never reach this loop when to and from are on top of eachother
+			
+			if(minIdx == -1) minIdx = i;
+			else if(moveOptions[i].second < moveOptions[minIdx].second) minIdx = i;
 		}
-		else if(std::abs(dx) > std::abs(dy)) {
-			linePositions.push_back({prevLinePos.x + sign(dx), prevLinePos.y});
-			dx -= sign(dx);
-		}
-		else {
-			linePositions.push_back({prevLinePos.x, prevLinePos.y + sign(dy)});
-			dy -= sign(dy);
+		linePositions.push_back(moveOptions[minIdx].first);
+
+		if(linePositions.size() > 256) {
+			Logger::Warning("Couldnt finish drawing line from (" + std::to_string(from.x) + ", " + std::to_string(from.y) + ") to (" + std::to_string(to.x) + ", " + std::to_string(to.y) + ")");
+			return {};
 		}
 	}
 
