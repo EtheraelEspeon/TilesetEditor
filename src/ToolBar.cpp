@@ -43,6 +43,19 @@ void ToolBar::Update(Rectangle size) {
 	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_PRESSED, 0x00000080); // make buttons get darker when pressed
 	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_DISABLED, 0x00000040); // make the button body transparent when the color is selected
 
+	/* ---- check for hotkeys to switch tools ---- */ 
+
+	// permanent switches
+	if(IsKeyPressed(KEY_B)) HardSwitchTool(TileEditor::ToolType::Brush);
+	if(IsKeyPressed(KEY_G)) HardSwitchTool(TileEditor::ToolType::Fill);
+	// soft switches
+	if(IsKeyPressed(KEY_LEFT_SHIFT)) SoftSwitchTool(TileEditor::ToolType::Line);
+	
+	bool shouldRevertSoftSwitch = IsKeyReleased(KEY_LEFT_SHIFT);
+	if(shouldRevertSoftSwitch) RevertSoftSwitch();
+
+	/* ---- draw the buttons and poll input ---- */
+
 	int totalWidthOfAllButtons = GuiSizeInfo::ToolButtonSize * tools.size();
 	int totalSpaceBetweenButtons = (size.width - totalWidthOfAllButtons) / (tools.size() - 1);
 	
@@ -60,11 +73,24 @@ void ToolBar::Update(Rectangle size) {
 
 		if(thisToolIsSelected) GuiDisable();
 		if(GuiButton(bounds, "")) {
-			TileEditor::SetTool(tools[i].type);
+			HardSwitchTool(tools[i].type);
 		}
 		if(thisToolIsSelected) GuiEnable();
 		
 		// Draw the icon on top of the darkened button
 		DrawTexturePro(tools[i].Texture(), {0, 0, 16, 16}, bounds, {0, 0}, 0, {255, 255, 255, 255});
 	}
+}
+
+void ToolBar::HardSwitchTool(TileEditor::ToolType toolType) {
+	prevToolType = TileEditor::ToolType::Null;
+	TileEditor::SetTool(toolType);
+}
+void ToolBar::SoftSwitchTool(TileEditor::ToolType toolType) {
+	prevToolType = TileEditor::CurrentTool();
+	TileEditor::SetTool(toolType);
+}
+void ToolBar::RevertSoftSwitch() {
+	TileEditor::SetTool(prevToolType);
+	prevToolType = TileEditor::ToolType::Null;
 }

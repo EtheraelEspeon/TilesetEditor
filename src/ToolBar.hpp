@@ -26,4 +26,10 @@ private:
 	static std::vector<Tool> tools;
 
 	bool DrawToolButton(Tool tool, int xPos);
+
+	TileEditor::ToolType prevToolType = TileEditor::ToolType::Null; // for hotkeys that switch the current tool while held
+
+	void HardSwitchTool(TileEditor::ToolType toolType);
+	void SoftSwitchTool(TileEditor::ToolType toolType);
+	void RevertSoftSwitch();
 };
