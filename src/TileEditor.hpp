@@ -17,7 +17,9 @@ public:
 
 	enum class ToolType {
 		Null,
-		Brush
+		Brush,
+		Line,
+		Fill
 	};
 	static void SetTool(ToolType tool);
 	static ToolType CurrentTool();
@@ -35,6 +37,8 @@ private:
 		bool operator!=(const TilePos& rhs) const;
 		bool operator>(const TilePos& rhs) const;
 		bool operator<(const TilePos& rhs) const;
+
+		TilePos operator+(const TilePos& rhs) const;
 	};
 
 	static int sign(int x);
@@ -57,6 +61,19 @@ private:
 	static ToolType currentTool; // as above
 
 	struct Brush : public Tool {
+		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
+	};
+	struct Line : public Tool {
+		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
+	private:
+		enum {
+			NoPoints,
+			OnePoint
+		} state = NoPoints;
+
+		TilePos startPos = TilePos(0, 0);
+	};
+	struct Fill : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
 	};
 };

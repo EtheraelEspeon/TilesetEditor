@@ -1,5 +1,7 @@
 #include "TileEditor.hpp"
 
+#include <algorithm>
+
 #include "Logger.hpp"
 
 TileEditor::TileEditor() {
@@ -162,6 +164,10 @@ bool TileEditor::TilePos::operator<(const TilePos& rhs) const {
 	return !(*this > rhs) && (*this != rhs);
 }
 
+TileEditor::TilePos TileEditor::TilePos::operator+(const TilePos& rhs) const {
+	return {std::clamp(x + rhs.x, 0, 15), std::clamp(y + rhs.y, 0, 15)};
+}
+
 TileEditor::Tool* TileEditor::tool = nullptr;
 TileEditor::ToolType TileEditor::currentTool = ToolType::Null;
 void TileEditor::SetTool(ToolType toolType) {
@@ -170,12 +176,18 @@ void TileEditor::SetTool(ToolType toolType) {
 
 	if(!tool) delete tool;
 	switch(toolType) {
-		case(ToolType::Brush):
-			tool = new Brush();
-			break;
-		default:
-			tool = nullptr;
-			Logger::Error("Tried to set invalid tool type");
+	case(ToolType::Brush):
+		tool = new Brush();
+		break;
+	case(ToolType::Line):
+		tool = new Line();
+		break;
+	case(ToolType::Fill):
+		tool = new Fill();
+		break;
+	default:
+		tool = nullptr;
+		Logger::Error("Tried to set invalid tool type");
 	}
 }
 TileEditor::ToolType TileEditor::CurrentTool() { return currentTool; }
@@ -205,5 +217,95 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 
 	// draw brush cursor
 	DrawRectangleRec(GetPixelBounds(mouseTilePos, tileRegion), TilesetData::GetColor(cursorColor));
+	reservedPixels->insert(mouseTilePos);
+}
+void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
+	
+	Vector2 mousePos = GetMousePosition();
+	bool leftClick = IsMouseButtonPressed(0);
+	bool rightClick = IsMouseButtonPressed(1);
+
+	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
+	ColorIdx paintColorIdx = rightClick ? 0 : TilesetData::GetActiveColorIdx();
+	Color paintColor = TilesetData::GetColor(paintColorIdx);
+
+	if(rightClick) state = NoPoints;
+
+	switch(state) {
+	case(NoPoints): {
+		// paint preview point
+		DrawRectangleRec(GetPixelBounds(mouseTilePos, tileRegion), paintColor);
+		reservedPixels->insert(mouseTilePos);
+		// progress state
+		if(leftClick) {
+			startPos = mouseTilePos;
+			state = OnePoint;
+		}
+		break;
+	} case(OnePoint): {
+		// paint preview line
+		auto toPaint = LineBetween(mouseTilePos, startPos);
+		for(auto t : toPaint) {
+			DrawRectangleRec(GetPixelBounds(t, tileRegion), paintColor);
+			reservedPixels->insert(t);
+		}
+		// progress state
+		if(leftClick) for (auto t : toPaint) {
+			TilesetData::GetActiveTile()->SetPixel(t.x, t.y, paintColorIdx);
+			state = NoPoints;
+		}
+		break;
+	} default:
+		Logger::Warning("Line tool in invalid state. Rightclick in tile editor region to resolve");
+	}
+}
+void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
+
+	Vector2 mousePos = GetMousePosition();
+	bool leftClick = IsMouseButtonPressed(0);
+	bool rightClick = IsMouseButtonPressed(1);
+	bool userIsInteracting = leftClick || rightClick;
+
+	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
+	ColorIdx paintColor = rightClick ? 0 : TilesetData::GetActiveColorIdx();
+
+	// paint
+	if(userIsInteracting) {
+		ColorIdx colorToMatch = activeTile->GetPixel(mouseTilePos.x, mouseTilePos.y);
+	
+		std::set<TilePos> checkedTiles = {mouseTilePos};
+		std::set<TilePos>* toCheck = new std::set<TilePos>({mouseTilePos});
+		std::set<TilePos>* toCheckNext = new std::set<TilePos>({});
+		std::vector<TilePos> fillDirections;
+
+		if(!IsKeyDown(KEY_LEFT_CONTROL)) fillDirections = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+		else fillDirections = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
+
+		while(!toCheck->empty()) {
+			for(auto p : *toCheck) {
+				checkedTiles.insert(p);
+
+				if(activeTile->GetPixel(p.x, p.y) != colorToMatch) continue;
+				activeTile->SetPixel(p.x, p.y, paintColor);
+
+				for(auto d : fillDirections) {
+					auto newPosToCheck = p + d;
+					if(checkedTiles.contains(newPosToCheck)) continue;
+
+					toCheckNext->insert(newPosToCheck);
+				}
+			}
+
+			delete toCheck;
+			toCheck = toCheckNext;
+			toCheckNext = new std::set<TilePos>();
+		}
+
+		delete toCheck;
+		delete toCheckNext;
+	}
+
+	// draw brush cursor
+	DrawRectangleRec(GetPixelBounds(mouseTilePos, tileRegion), TilesetData::GetColor(paintColor));
 	reservedPixels->insert(mouseTilePos);
 }

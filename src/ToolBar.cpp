@@ -8,8 +8,8 @@
 
 std::vector<ToolBar::Tool> ToolBar::tools = {
 	Tool(TileEditor::ToolType::Brush, "res/toolbar/brush.png"),
-	Tool(TileEditor::ToolType::Null, "res/toolbar/line.png"),
-	Tool(TileEditor::ToolType::Null, "res/toolbar/fill.png")
+	Tool(TileEditor::ToolType::Line, "res/toolbar/line.png"),
+	Tool(TileEditor::ToolType::Fill, "res/toolbar/fill.png")
 };
 ToolBar::Tool::Tool(TileEditor::ToolType type, std::string iconPath) {
 	this->type = type;
