@@ -10,7 +10,7 @@ struct GuiSizeInfo {
 	constexpr static float PercentLeftRegionWidth = 6.0/32.0; // Percent of the screen's width occupied by the left region
 	constexpr static float PercentRightRegionWidth = 8.0/32.0; // as above for the right region
 	constexpr static int TargetNumberOfDisplayedTiles = 8;
-	constexpr static int ToolBarHeight = 48; 
+	constexpr static int ToolButtonSize = 48; 
 	constexpr static int MenuBarHeight = 32;
 	constexpr static int TileSelectorSpacing = 8;
 	constexpr static int LeftRegionPadding = 16;

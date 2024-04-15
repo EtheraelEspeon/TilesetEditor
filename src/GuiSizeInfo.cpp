@@ -30,7 +30,7 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	/* --- set Tool Bar size --- */
 	toolBar.x = LeftRegionPadding;
 	toolBar.y = paletteEditor.y + paletteEditor.height + LeftRegionPadding;
-	toolBar.height = ToolBarHeight;
+	toolBar.height = ToolButtonSize;
 	toolBar.width = leftRegion.width - 2 * LeftRegionPadding;
 
 	/* --- set Color Picker size --- */

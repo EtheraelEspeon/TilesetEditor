@@ -9,6 +9,7 @@
 #include "Background.hpp"
 #include "PaletteEditor.hpp"
 #include "ColorPicker.hpp"
+#include "ToolBar.hpp"
 #include "TileEditor.hpp"
 
 int main() {
@@ -21,6 +22,7 @@ int main() {
 
 	PaletteEditor paletteEditor;
 	ColorPicker colorPicker;
+	ToolBar toolBar;
 	TileEditor tileEditor;
 
 	while(!WindowShouldClose()) {
@@ -38,12 +40,13 @@ int main() {
 		//DrawRectangleRec(info.TileEditor(), RED);
 		//DrawRectangleRec(info.TileSelector(), YELLOW);
 		DrawRectangleRec(info.MenuBar(), WHITE);
+		//DrawRectangleRec(info.ToolBar(), RED);
 
 		paletteEditor.Update(info.PaletteEditor());
 		colorPicker.Update(info.ColorPicker());
 		// tileSelector
+		toolBar.Update(info.ToolBar());
 		tileEditor.Update(info.TileEditor());
-		// toolBar
 
 		/*
 		Draw Order:

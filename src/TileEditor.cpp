@@ -162,7 +162,12 @@ bool TileEditor::TilePos::operator<(const TilePos& rhs) const {
 	return !(*this > rhs) && (*this != rhs);
 }
 
+TileEditor::Tool* TileEditor::tool = nullptr;
+TileEditor::ToolType TileEditor::currentTool = ToolType::Null;
 void TileEditor::SetTool(ToolType toolType) {
+	
+	currentTool = toolType;
+
 	if(!tool) delete tool;
 	switch(toolType) {
 		case(ToolType::Brush):
@@ -173,6 +178,7 @@ void TileEditor::SetTool(ToolType toolType) {
 			Logger::Error("Tried to set invalid tool type");
 	}
 }
+TileEditor::ToolType TileEditor::CurrentTool() { return currentTool; }
 
 void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
 	

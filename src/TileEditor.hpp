@@ -15,6 +15,12 @@ public:
 
 	void Update(Rectangle size);
 
+	enum class ToolType {
+		Null,
+		Brush
+	};
+	static void SetTool(ToolType tool);
+	static ToolType CurrentTool();
 private:
 
 	bool pressBeganOutsideEditorRegion = false;
@@ -39,11 +45,6 @@ private:
 	// in tile coordinates
 	static std::vector<TilePos> LineBetween(TilePos to, TilePos from);
 
-	enum class ToolType {
-		Brush
-	};
-	void SetTool(ToolType tool);
-
 	struct Tool {
 		/// @brief Paints onto the active tile, draws to the screen, and polls user input.
 		/// @param activeTile The active tile
@@ -52,7 +53,8 @@ private:
 		virtual void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) = 0;
 	};
 
-	Tool* tool = nullptr; // Should never be null. Is initialized on object creation
+	static Tool* tool; // Should never be null. Is initialized on object creation
+	static ToolType currentTool; // as above
 
 	struct Brush : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
