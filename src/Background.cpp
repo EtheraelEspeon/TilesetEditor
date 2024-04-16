@@ -28,8 +28,8 @@ namespace Background {
 	void DrawRightRegion(Rectangle size) {
 		int halfPadding = GuiSizeInfo::RightRegionPadding / 2;
 		DrawRectangleRec(size, rightBorder);
-		DrawRectangle(size.x + halfPadding, size.y + halfPadding,
-		              size.width - 2 * halfPadding, size.height - 2 * halfPadding,
+		DrawRectangle(size.x + halfPadding, size.y,
+		              size.width - 2 * halfPadding, size.height,
 					  rightBody);
 	}
 }
