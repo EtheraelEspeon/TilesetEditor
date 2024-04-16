@@ -202,6 +202,9 @@ void TileEditor::SetTool(ToolType toolType) {
 	case(ToolType::Fill):
 		tool = new Fill();
 		break;
+	case(ToolType::Eyedropper):
+		tool = new Eyedropper();
+		break;
 	default:
 		tool = nullptr;
 		Logger::Error("Tried to set invalid tool type");
@@ -325,4 +328,18 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 	// draw brush cursor
 	DrawRectangleRec(GetPixelBounds(mouseTilePos, tileRegion), TilesetData::GetColor(paintColor));
 	reservedPixels->insert(mouseTilePos);
+}
+void TileEditor::Eyedropper::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
+	
+	bool leftClick = IsMouseButtonPressed(0);
+	bool alt = IsKeyDown(KEY_LEFT_ALT);
+	
+	if(leftClick && alt) {
+		TilePos mousePos = WindowPosToTilePos(GetMousePosition(), tileRegion);
+		ColorIdx newColor = activeTile->GetPixel(mousePos.x, mousePos.y);
+		
+		if(newColor != 0) TilesetData::SetActiveColor(newColor);
+	}
+	
+
 }

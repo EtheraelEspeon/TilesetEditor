@@ -19,7 +19,8 @@ public:
 		Null,
 		Brush,
 		Line,
-		Fill
+		Fill,
+		Eyedropper
 	};
 	static void SetTool(ToolType tool);
 	static ToolType CurrentTool();
@@ -74,6 +75,9 @@ private:
 		TilePos startPos = TilePos(0, 0);
 	};
 	struct Fill : public Tool {
+		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
+	};
+	struct Eyedropper : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
 	};
 };

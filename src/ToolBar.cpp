@@ -7,14 +7,14 @@
 #include "Background.hpp"
 
 std::vector<ToolBar::Tool> ToolBar::tools = {
-	Tool(TileEditor::ToolType::Brush, "res/toolbar/brush.png"),
+	Tool(TileEditor::ToolType::Eyedropper, "res/toolbar/eyedropper.png"),
 	Tool(TileEditor::ToolType::Line, "res/toolbar/line.png"),
-	Tool(TileEditor::ToolType::Fill, "res/toolbar/fill.png")
+	Tool(TileEditor::ToolType::Fill, "res/toolbar/fill.png"),
+	Tool(TileEditor::ToolType::Brush, "res/toolbar/brush.png")
 };
 ToolBar::Tool::Tool(TileEditor::ToolType type, std::string iconPath) {
 	this->type = type;
 	texturePath = iconPath;
-	
 }
 Texture2D ToolBar::Tool::Texture() {
 	if(!textureInitialized) {
@@ -50,8 +50,9 @@ void ToolBar::Update(Rectangle size) {
 	if(IsKeyPressed(KEY_G)) HardSwitchTool(TileEditor::ToolType::Fill);
 	// soft switches
 	if(IsKeyPressed(KEY_LEFT_SHIFT)) SoftSwitchTool(TileEditor::ToolType::Line);
-	
-	bool shouldRevertSoftSwitch = IsKeyReleased(KEY_LEFT_SHIFT);
+	if(IsKeyPressed(KEY_LEFT_ALT)) SoftSwitchTool(TileEditor::ToolType::Eyedropper);
+
+	bool shouldRevertSoftSwitch = IsKeyReleased(KEY_LEFT_SHIFT) || IsKeyReleased(KEY_LEFT_ALT);
 	if(shouldRevertSoftSwitch) RevertSoftSwitch();
 
 	/* ---- draw the buttons and poll input ---- */
