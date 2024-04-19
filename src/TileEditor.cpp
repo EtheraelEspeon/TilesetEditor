@@ -1,6 +1,7 @@
 #include "TileEditor.hpp"
 
 #include <algorithm>
+#include <format>
 
 #include "Logger.hpp"
 
@@ -9,17 +10,6 @@ TileEditor::TileEditor() {
 }
 
 void TileEditor::Update(Rectangle size) {
-	// check hotkeys
-	if(IsKeyDown(KEY_LEFT_CONTROL)) {
-		if(IsKeyPressed(KEY_Z)) {
-			TilesetData::GetActiveTile()->RevertChangesInFrame();
-		}
-	}
-
-	// delete old changes on the rising edge of a new erase or draw action
-	if(IsMouseButtonPressed(0) || IsMouseButtonPressed(1)) {
-		TilesetData::GetActiveTile()->CloseCurrentChangeFrame();
-	}
 
 	int hStep = size.width / 16;
 	int vStep = size.height / 16;
@@ -212,6 +202,11 @@ void TileEditor::SetTool(ToolType toolType) {
 }
 TileEditor::ToolType TileEditor::CurrentTool() { return currentTool; }
 
+TileEditor::Tool::Change::Change(int x, int y, ColorIdx prevColor) {
+	pixelIdx = 16 * y + x;
+	this->prevColor = prevColor;
+}
+
 void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
 	
 	Vector2 mousePos = GetMousePosition();
@@ -225,14 +220,36 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 	// paint
 	if(userIsInteracting) {
 
+		painting = true;
+
 		Vector2 mouseDeltaBetweenFrames = GetMouseDelta();
 		TilePos prevMouseTilePos = WindowPosToTilePos({mousePos.x - mouseDeltaBetweenFrames.x, mousePos.y - mouseDeltaBetweenFrames.y}, tileRegion);
 
 		// paint line
 		auto linePositions = LineBetween(mouseTilePos, prevMouseTilePos);
 		for(auto p : linePositions) {
-			TilesetData::GetActiveTile()->SetPixel(p.x, p.y, cursorColor);
+			
+			ColorIdx currentColor = activeTile->GetPixel(p.x, p.y);
+			if(currentColor == cursorColor) continue;
+
+			interactionChangeHistory.push_back(Change(p.x, p.y, currentColor));
+			activeTile->SetPixel(p.x, p.y, cursorColor);
 		}
+	}
+	else if(painting) {
+		painting = false;
+
+		// can happen fairly easily.
+		// ex: the user left clicks on a single pixel that's already painted to the same idx as the current color
+		if(!interactionChangeHistory.empty()) {
+			UndoQueue::PushResetter([history=interactionChangeHistory](Tile* tile){
+				for(int i = history.size() - 1; i >= 0; i--) {
+					tile->SetPixel(history[i].pixelIdx, history[i].prevColor);
+				}
+			}, activeTile);
+		}
+
+		interactionChangeHistory.clear();
 	}
 
 	// draw brush cursor
@@ -263,16 +280,29 @@ void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		}
 		break;
 	} case(OnePoint): {
-		// paint preview line
 		auto toPaint = LineBetween(mouseTilePos, startPos);
+		// paint preview line
 		for(auto t : toPaint) {
 			DrawRectangleRec(GetPixelBounds(t, tileRegion), paintColor);
 			reservedPixels->insert(t);
 		}
 		// progress state
-		if(leftClick) for (auto t : toPaint) {
-			TilesetData::GetActiveTile()->SetPixel(t.x, t.y, paintColorIdx);
-			state = NoPoints;
+		if(leftClick) {
+			
+			std::vector<Change> changes = {};
+
+			for (auto t : toPaint) {
+				changes.push_back(Change(t.x, t.y, activeTile->GetPixel(t.x, t.y)));
+				activeTile->SetPixel(t.x, t.y, paintColorIdx);
+				state = NoPoints;
+			}
+
+			UndoQueue::PushResetter([toUndo=changes](Tile* tile){
+				
+				for(int i = toUndo.size() - 1; i >= 0; i--) {
+					tile->SetPixel(toUndo[i].pixelIdx, toUndo[i].prevColor);
+				}
+			}, activeTile);
 		}
 		break;
 	} default:
@@ -301,11 +331,14 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		if(!IsKeyDown(KEY_LEFT_CONTROL)) fillDirections = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 		else fillDirections = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
 
+		std::vector<Change> paintHistory = {};
+
 		while(!toCheck->empty()) {
 			for(auto p : *toCheck) {
 				checkedTiles.insert(p);
 
 				if(activeTile->GetPixel(p.x, p.y) != colorToMatch) continue;
+				paintHistory.push_back(Change(p.x, p.y, activeTile->GetPixel(p.x, p.y)));
 				activeTile->SetPixel(p.x, p.y, paintColor);
 
 				for(auto d : fillDirections) {
@@ -323,6 +356,12 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 
 		delete toCheck;
 		delete toCheckNext;
+
+		UndoQueue::PushResetter([toUndo=paintHistory](Tile* tile){
+			for(int i = toUndo.size() - 1; i >= 0; i--) {
+				tile->SetPixel(toUndo[i].pixelIdx, toUndo[i].prevColor);
+			}
+		}, activeTile);
 	}
 
 	// draw brush cursor

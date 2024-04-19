@@ -1,5 +1,7 @@
 #include "TilesetData.hpp"
 
+#include <format>
+
 #include "Logger.hpp"
 
 Tile::Tile() {
@@ -8,41 +10,33 @@ Tile::Tile() {
 
 void Tile::SetPixel(int x, int y, ColorIdx color) {
 	int idx = y * 16 + x;
-
-	Change change = {idx, colorData[idx]};
-
-	if(color != colorData[idx]) changeHistory.push_back(change); // prevent meaningless changes from being logged
-
-	colorData[idx] = color;
+	SetPixel(idx, color);
+}
+void Tile::SetPixel(uint8_t rawIdx, ColorIdx color) {
+	colorData[rawIdx] = color;
+	//Logger::Debug(std::format("[{}] -> {}", rawIdx, color));
 }
 ColorIdx Tile::GetPixel(int x, int y) { return colorData[y * 16 + x]; }
 
-void Tile::CloseCurrentChangeFrame() {
-	changeFrameBeginnings.push_back(changeHistory.size());
-}
-void Tile::RevertChangesInFrame() {
+void UndoQueue::PushResetter(UndoQueue::Resetter undo, Tile* currentActiveTile) {
+	changeHistory.push_back({undo, currentActiveTile});
+};
+void UndoQueue::UndoLatestChange() {
 
-	if(changeFrameBeginnings.empty()) {
-		Logger::Debug("Tried to undo changes while tile had no change frames");
+	if(changeHistory.empty()) {
+		Logger::Debug("Attempted to undo when no changes were in queue");
 		return;
 	}
 
-	// revert changes
-	for(int i = changeHistory.size() - 1; i >= changeFrameBeginnings.back(); i--) {
-		Change change = changeHistory[i];
-		colorData[change.idxChanged] = change.prevColor;
-		
-		int y = change.idxChanged / 16;
-		int x = change.idxChanged - y * 16;
-		Logger::Debug("Reverted pixel (" + std::to_string(x) + ", " + std::to_string(y) + ") to color " + std::to_string(change.prevColor));
+	UndoAction latestChange = changeHistory.back();
+	changeHistory.pop_back();
+	
+	if(TilesetData::TileIsDeleted(latestChange.targetTile)) {
+		Logger::Debug("Attempted to undo an action on a deleted tile, recurring");
+		UndoLatestChange(); // This might overflow the stack? Seems unlikely.
 	}
-
-	changeHistory.erase(changeHistory.begin() + changeFrameBeginnings.back(), changeHistory.end());
-	changeFrameBeginnings.pop_back();
+	else latestChange.resetter(latestChange.targetTile);
 }
-
-bool Tile::Change::operator==(const Tile::Change& rhs) { return this->idxChanged == rhs.idxChanged && this->prevColor == rhs.prevColor; }
-bool Tile::Change::operator!=(const Tile::Change& rhs) { return !(*this == rhs); }
 
 TilesetData* TilesetData::inst = nullptr;
 void TilesetData::Initialize() {
@@ -59,7 +53,10 @@ void TilesetData::Initialize() {
 }
 
 void TilesetData::DeleteTile(int tileIdx) {
-	Inst()->tiles.erase(ItrFromTileIdx(tileIdx));
+	auto itr = ItrFromTileIdx(tileIdx);
+	
+	Inst()->deletedTileLocations.insert(&(*itr));
+	Inst()->tiles.erase(itr);
 }
 Tile* TilesetData::GetTile(int tileIdx) {
 	return &(*ItrFromTileIdx(tileIdx));
@@ -93,6 +90,10 @@ Tile* TilesetData::GetActiveTile() {
 }
 void TilesetData::SetActiveTile(int tileIdx) {
 	Inst()->activeTileIdx = tileIdx;
+}
+
+bool TilesetData::TileIsDeleted(void* tileLocation) {
+	return Inst()->deletedTileLocations.contains(tileLocation);
 }
 
 TilesetData* TilesetData::Inst() {

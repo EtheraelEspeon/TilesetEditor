@@ -56,6 +56,15 @@ private:
 		/// @param reservedPixels An out parameter containing tile pixels this tool painted over (like cursor previews)
 		/// @return a vector of tiles to paint with the active color
 		virtual void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) = 0;
+
+		protected:
+		
+		/// @brief Represents a single paint action. For use in UndoQueue::Resetters
+		struct Change {
+			Change(int x, int y, ColorIdx prevColor);
+			uint8_t pixelIdx;
+			ColorIdx prevColor;
+		};
 	};
 
 	static Tool* tool; // Should never be null. Is initialized on object creation
@@ -63,6 +72,9 @@ private:
 
 	struct Brush : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
+	private:
+		bool painting = false;
+		std::vector<Change> interactionChangeHistory;
 	};
 	struct Line : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) override;
