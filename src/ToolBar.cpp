@@ -18,15 +18,7 @@ ToolBar::Tool::Tool(TileEditor::ToolType type, std::string iconPath) {
 }
 Texture2D ToolBar::Tool::Texture() {
 	if(!textureInitialized) {
-		bool textureExists = std::filesystem::exists(texturePath);
-		if(textureExists) {
-			Logger::Message("Loaded texture \"" + texturePath + "\" successfully!");
-			tex = LoadTexture(texturePath.c_str());
-		}
-		else {
-			Logger::Warning("Failed to find texture\"" + texturePath + "\"");
-			tex = LoadTextureFromImage(GenImageColor(16, 16, {255, 0, 255, 255}));
-		}
+		
 		
 		textureInitialized = true;
 	}
