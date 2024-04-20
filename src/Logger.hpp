@@ -3,8 +3,7 @@
 #include <cstdint>
 #include <string>
 
-class Logger {
-	public:
+namespace Logger {
 	enum class Severity : uint8_t {
 		// for messages while debugging, there's no reason to print these in release mode
 		Debug = 0,
@@ -16,11 +15,11 @@ class Logger {
 		Error = 3
 	};
 
-	static void Log(std::string message, Severity severity);
-	static void Debug(std::string message);
-	static void Message(std::string message);
-	static void Warning(std::string message);
-	static void Error(std::string message);
+	void Log(std::string message, Severity severity);
+	void Debug(std::string message);
+	void Message(std::string message);
+	void Warning(std::string message);
+	void Error(std::string message);
 
-	static std::string SeverityAsString(Severity severity);
+	std::string SeverityAsString(Severity severity);
 };
