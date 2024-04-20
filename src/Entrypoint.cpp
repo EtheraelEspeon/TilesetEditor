@@ -61,8 +61,13 @@ int main() {
 		
 		*/
 
-		if(IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Z)) {
-			UndoQueue::UndoLatestChange();
+		if(IsKeyDown(KEY_LEFT_CONTROL)) {
+			if(IsKeyPressed(KEY_Z)) {
+				ChangeQueue::UndoLatestChange();
+			}
+			if(IsKeyPressed(KEY_Y)) {
+				ChangeQueue::RedoLatestChange();
+			}
 		}
 
 		EndDrawing();

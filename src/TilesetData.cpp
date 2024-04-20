@@ -18,24 +18,93 @@ void Tile::SetPixel(uint8_t rawIdx, ColorIdx color) {
 }
 ColorIdx Tile::GetPixel(int x, int y) { return colorData[y * 16 + x]; }
 
-void UndoQueue::PushResetter(UndoQueue::Resetter undo, Tile* currentActiveTile) {
-	changeHistory.push_back({undo, currentActiveTile});
-};
-void UndoQueue::UndoLatestChange() {
+ChangeQueue::PaintData::PaintData(int x, int y, ColorIdx color) {
+	pixelIdx = 16 * y + x;
+	this->color = color;
+}
 
-	if(changeHistory.empty()) {
-		Logger::Debug("Attempted to undo when no changes were in queue");
+ChangeQueue::UndoAction ChangeQueue::UnpaintPixelsAction(std::vector<PaintData> paintData, Tile* activeTile) {
+	for(auto& p : paintData) {
+		p.color = activeTile->colorData[p.pixelIdx];
+	}
+
+	return [paintData=paintData](Tile* tile){
+		for(int i = paintData.size() - 1; i >= 0; i--) {
+			tile->SetPixel(paintData[i].pixelIdx, paintData[i].color);
+		}
+	};
+}
+ChangeQueue::RedoAction ChangeQueue::PaintPixelsAction(std::vector<PaintData> paintData) {
+	return [paintData=paintData](Tile* tile){
+		for(int i = 0; i < paintData.size(); i++) {
+			tile->SetPixel(paintData[i].pixelIdx, paintData[i].color);
+		}
+	};
+}
+
+ChangeQueue::Change::~Change() {
+	if(next != nullptr) delete next;
+	Logger::Debug("Deleted change");
+}
+void ChangeQueue::ApplyChange(RedoAction redo, UndoAction undo, Tile* activeTile) {
+	if(firstChangeIsUndone == true) {
+		delete latestChange;
+		latestChange = nullptr;
+		firstChangeIsUndone = false;
+	}
+	
+	if(latestChange == nullptr) {
+		latestChange = new Change();
+		Logger::Debug("Initialized change history tree");
+	}
+	else {
+		if(latestChange->next != nullptr) delete latestChange->next; 
+		latestChange->next = new Change();
+		latestChange->next->prev = latestChange;
+		latestChange = latestChange->next;
+		Logger::Debug("Appended new change to history tree");
+	}
+
+	latestChange->redo = redo;
+	latestChange->undo = undo;
+	latestChange->targetTile = activeTile;
+	
+	latestChange->redo(latestChange->targetTile);
+};
+void ChangeQueue::UndoLatestChange() {
+
+	if(latestChange == nullptr || firstChangeIsUndone) {
+		Logger::Debug("Attempted to undo while at the beginning of history");
 		return;
 	}
 
-	UndoAction latestChange = changeHistory.back();
-	changeHistory.pop_back();
-	
-	if(TilesetData::TileIsDeleted(latestChange.targetTile)) {
+	if(TilesetData::TileIsDeleted(latestChange->targetTile)) {
 		Logger::Debug("Attempted to undo an action on a deleted tile, recurring");
+		latestChange = latestChange->prev;
 		UndoLatestChange(); // This might overflow the stack? Seems unlikely.
 	}
-	else latestChange.resetter(latestChange.targetTile);
+	else {
+		latestChange->undo(latestChange->targetTile);
+		if(latestChange->prev == nullptr) firstChangeIsUndone = true;
+		else latestChange = latestChange->prev;
+	}
+}
+void ChangeQueue::RedoLatestChange() {
+
+	if(latestChange->next == nullptr && !firstChangeIsUndone) {
+		Logger::Debug("Attempted to redo when end of history");
+		return;
+	}
+	
+	if(!firstChangeIsUndone) latestChange = latestChange->next;
+	else firstChangeIsUndone = false;
+
+	if(TilesetData::TileIsDeleted(latestChange->targetTile)) {
+		Logger::Debug("Attempted to redo an action on a deleted tile, recurring");
+		latestChange = latestChange->next;
+		RedoLatestChange(); // This might overflow the stack? Seems unlikely.
+	}
+	else latestChange->redo(latestChange->targetTile);
 }
 
 TilesetData* TilesetData::inst = nullptr;

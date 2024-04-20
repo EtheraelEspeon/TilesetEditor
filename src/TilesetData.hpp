@@ -11,31 +11,65 @@
 
 typedef uint8_t ColorIdx;
 
+class ChangeQueue;
 struct Tile {
 	Tile();
 
-	void SetPixel(int x, int y, ColorIdx color);
-	void SetPixel(uint8_t rawIdx, ColorIdx color);
 	ColorIdx GetPixel(int x, int y);
 
 private:
+
+	void SetPixel(int x, int y, ColorIdx color);
+	void SetPixel(uint8_t rawIdx, ColorIdx color);
+
 	std::array<ColorIdx, 16 * 16> colorData;
+
+	friend class ChangeQueue;
 };
 
-class UndoQueue {
+class ChangeQueue {
 public:
-	typedef std::function<void(Tile*)> Resetter; // closure that modifies the global state (TilesetData) to undo an action
-
-	static void PushResetter(Resetter undo, Tile* currentActiveTile);
-	static void UndoLatestChange();
-
-private:
-	struct UndoAction {
-		Resetter resetter;
-		Tile* targetTile; // stores this separately so it can check if the tile has been deleted/moved between the construction of the closure and when the user undoes an action
+	/// @brief The color to paint a single pixel
+	struct PaintData {
+		PaintData(int x, int y, ColorIdx color);
+		uint8_t pixelIdx;
+		ColorIdx color;
 	};
 
-	static inline std::list<UndoAction> changeHistory = {}; // TODO: How do i track the memory allocated to the closures in here?
+	typedef std::function<void(Tile*)> RedoAction;
+	typedef std::function<void(Tile*)> UndoAction;
+
+	/// @note stomps over the color member of the supplied PaintData with the old color idx
+	/// @return a closure using the given paintData to undo the painting done by the redo action
+	static UndoAction UnpaintPixelsAction(std::vector<PaintData> paintData, Tile* activeTile);
+	/// @return a closure using the given paintData to paint the specified pixels
+	static RedoAction PaintPixelsAction(std::vector<PaintData> paintData);
+
+	static void ApplyChange(RedoAction redo, UndoAction undo, Tile* targetTile);
+
+	static void UndoLatestChange();
+	static void RedoLatestChange();
+
+private:
+	struct Change {
+
+		~Change();
+
+		/// @brief Performs this change.
+		/// @note Applied when this becomes the latest change.
+		RedoAction redo;
+		/// @brief Resets the tileset's state that of the previous change
+		/// @note Applied before switching to the previous change
+		UndoAction undo;
+		/// @brief The tile that was active when this change was originally applied
+		Tile* targetTile;
+
+		Change* next = nullptr;
+		Change* prev = nullptr;
+	};
+
+	static inline Change* latestChange = nullptr; // TODO: How do i track the memory allocated to the closures in this tree?
+	static inline bool firstChangeIsUndone = false;
 };
 
 // Singleton
@@ -48,7 +82,7 @@ public:
 
 	static Color GetColor(ColorIdx colorIdx);
 	static void SetColor(ColorIdx colorIdx, Color color);
-	
+
 	static Color GetActiveColor();
 	static int GetActiveColorIdx();
 	static void SetActiveColor(ColorIdx colorIdx);

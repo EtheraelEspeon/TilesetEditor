@@ -28,9 +28,11 @@ void ColorPicker::Update(Rectangle size) {
 		uint32_t pickedColorInt = ColorToInt(pickedColor);
 		if(startColorInt != pickedColorInt) {
 			Logger::Debug(std::format("Color picker pushed an undo action. (Reverted {0:8x} to {1:8x})", pickedColorInt, startColorInt));
-			UndoQueue::PushResetter([oldColor=colorOnPress, oldColorIdx=activeColor](Tile* unused){
-				TilesetData::SetColor(oldColorIdx, oldColor);
-			}, nullptr);
+			ChangeQueue::ApplyChange(
+				[idx=colorIdxOnPress, color=pickedColor ](Tile* unused){ TilesetData::SetColor(idx, color); },
+				[idx=colorIdxOnPress, color=colorOnPress](Tile* unused){ TilesetData::SetColor(idx, color); },
+				nullptr
+			);
 		}
 	}
 }
