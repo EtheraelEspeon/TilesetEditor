@@ -6,6 +6,7 @@
 #include "GuiSizeInfo.hpp"
 #include "Background.hpp"
 #include "AssetLoader.hpp"
+#include "Input.hpp"
 
 std::vector<ToolBar::Tool> ToolBar::tools = {
 	Tool(TileEditor::ToolType::Eyedropper, "res/toolbar/eyedropper.png"),
@@ -38,13 +39,13 @@ void ToolBar::Update(Rectangle size) {
 	/* ---- check for hotkeys to switch tools ---- */ 
 
 	// permanent switches
-	if(IsKeyPressed(KEY_B)) HardSwitchTool(TileEditor::ToolType::Brush);
-	if(IsKeyPressed(KEY_G)) HardSwitchTool(TileEditor::ToolType::Fill);
+	if(Input::KeybindIsPressed("SetTool_Brush")) HardSwitchTool(TileEditor::ToolType::Brush);
+	if(Input::KeybindIsPressed("SetTool_Fill"))  HardSwitchTool(TileEditor::ToolType::Fill);
 	// soft switches
-	if(IsKeyPressed(KEY_LEFT_SHIFT)) SoftSwitchTool(TileEditor::ToolType::Line);
-	if(IsKeyPressed(KEY_LEFT_ALT)) SoftSwitchTool(TileEditor::ToolType::Eyedropper);
+	if(Input::KeybindIsPressed("SwapTool_Line"))       SoftSwitchTool(TileEditor::ToolType::Line);
+	if(Input::KeybindIsPressed("SwapTool_Eyedropper")) SoftSwitchTool(TileEditor::ToolType::Eyedropper);
 
-	bool shouldRevertSoftSwitch = IsKeyReleased(KEY_LEFT_SHIFT) || IsKeyReleased(KEY_LEFT_ALT);
+	bool shouldRevertSoftSwitch = Input::KeybindIsHeld("SwapTool_Line") || Input::KeybindIsHeld("SwapTool_Eyedropper");
 	if(shouldRevertSoftSwitch) RevertSoftSwitch();
 
 	/* ---- draw the buttons and poll input ---- */

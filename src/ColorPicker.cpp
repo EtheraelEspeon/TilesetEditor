@@ -3,13 +3,14 @@
 #include <format>
 
 #include "Logger.hpp"
+#include "Input.hpp"
 
 void ColorPicker::Update(Rectangle size) {
 	
 	ColorIdx activeColor = 	TilesetData::GetActiveColorIdx();
 	Color pickedColor = TilesetData::GetColor(activeColor);
 	
-	if(IsMouseButtonPressed(0)) {
+	if(Input::PrimaryInteractionPressed()) {
 		colorIdxOnPress = activeColor;
 		colorOnPress = pickedColor;
 	}
@@ -22,7 +23,7 @@ void ColorPicker::Update(Rectangle size) {
 
 	TilesetData::SetColor(activeColor, pickedColor);
 
-	if(IsMouseButtonReleased(0) && colorIdxOnPress == activeColor) {
+	if(Input::PrimaryInteractionReleased() && colorIdxOnPress == activeColor) {
 		
 		uint32_t startColorInt = ColorToInt(colorOnPress);
 		uint32_t pickedColorInt = ColorToInt(pickedColor);

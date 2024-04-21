@@ -5,6 +5,7 @@
 
 #include "TilesetData.hpp"
 #include "Logger.hpp"
+#include "Input.hpp"
 
 void PaletteEditor::Update(Rectangle size){
 
@@ -55,50 +56,54 @@ void PaletteEditor::Update(Rectangle size){
 		}
 	}
 
-	if(IsKeyDown(KEY_LEFT_CONTROL)) {
-		if(IsKeyPressed(KEY_C)) {
-			Color c = TilesetData::GetActiveColor();
+	if(Input::KeybindIsPressed("CopyColor")) {
+		Color c = TilesetData::GetActiveColor();
 			uint32_t colorInt = ColorToInt(c);
 			std::string colorHexCode = std::format("{0:8x}", colorInt);
 			
 			SetClipboardText(colorHexCode.c_str());
 			Logger::Debug("Copied " + colorHexCode);
-		}
-		if(IsKeyPressed(KEY_V)) { // early returns, has to stay at the end of this method
-			std::string colorHexCode = GetClipboardText();
+	}
+	if(Input::KeybindIsPressed("PasteColor")) {
+		std::string colorHexCode = GetClipboardText();
 
-			if(colorHexCode.size() != 8) {
-				Logger::Debug("Tried to paste \"" + colorHexCode + "\" and failed to parse. Size != 8");
+		if (colorHexCode.size() != 8)
+		{
+			Logger::Debug("Tried to paste \"" + colorHexCode + "\" and failed to parse. Size != 8");
+			return;
+		}
+
+		uint32_t colorInt = 0;
+		int multiplier = 1;
+		for (int i = 7; i >= 0; i--)
+		{
+			char c = colorHexCode[i];
+
+			// numeral [0, 9]
+			if (c >= 48 && c <= 57)
+			{
+				colorInt += (c - 48) * multiplier;
+			}
+			// capital letter [A, F]
+			else if (c >= 65 && c <= 70)
+			{
+				colorInt += (c - 65 + 10) * multiplier;
+			}
+			// lowercase letter [a, f]
+			else if (c >= 97 && c <= 102)
+			{
+				colorInt += (c - 97 + 10) * multiplier;
+			}
+			else
+			{
+				Logger::Debug("Failed to parse character \"" + std::string{c} + "\" in hex code \"" + colorHexCode + "\"");
 				return;
 			}
-			
-			uint32_t colorInt = 0;
-			int multiplier = 1;
-			for(int i = 7; i >= 0; i--) {
-				char c = colorHexCode[i];
 
-				// numeral [0, 9]
-				if(c >= 48 && c <= 57) {
-					colorInt += (c - 48) * multiplier;
-				}
-				// capital letter [A, F]
-				else if(c >= 65 && c <= 70) {
-					colorInt += (c - 65 + 10) * multiplier;
-				}
-				// lowercase letter [a, f]
-				else if(c >= 97 && c <= 102) {
-					colorInt += (c - 97 + 10) * multiplier;
-				}
-				else {
-					Logger::Debug("Failed to parse character \"" + std::string{c} + "\" in hex code \"" + colorHexCode + "\"");
-					return;
-				}
-
-				multiplier *= 16;
-			}
-
-			TilesetData::SetColor(TilesetData::GetActiveColorIdx(), GetColor(colorInt));
-			Logger::Debug("Pasted " + colorHexCode + " (" + std::format("{0:8x}", colorInt) + ")");
+			multiplier *= 16;
 		}
+
+		TilesetData::SetColor(TilesetData::GetActiveColorIdx(), GetColor(colorInt));
+		Logger::Debug("Pasted " + colorHexCode + " (" + std::format("{0:8x}", colorInt) + ")");
 	}
 }

@@ -4,6 +4,7 @@
 #include "../raylib/raygui.h"
 
 #include "TilesetData.hpp"
+#include "Input.hpp"
 #include "GuiSizeInfo.hpp"
 
 #include "Background.hpp"
@@ -19,6 +20,7 @@ int main() {
 	SetTargetFPS(60);
 
 	TilesetData::Initialize();
+	Input::Initialize();
 
 	PaletteEditor paletteEditor;
 	ColorPicker colorPicker;
@@ -61,14 +63,8 @@ int main() {
 		
 		*/
 
-		if(IsKeyDown(KEY_LEFT_CONTROL)) {
-			if(IsKeyPressed(KEY_Z)) {
-				ChangeQueue::UndoLatestChange();
-			}
-			if(IsKeyPressed(KEY_Y)) {
-				ChangeQueue::RedoLatestChange();
-			}
-		}
+		if(Input::KeybindIsPressed("Undo")) ChangeQueue::UndoLatestChange();
+		if(Input::KeybindIsPressed("Redo")) ChangeQueue::RedoLatestChange();
 
 		EndDrawing();
 	}

@@ -4,6 +4,7 @@
 #include <format>
 
 #include "Logger.hpp"
+#include "Input.hpp"
 
 TileEditor::TileEditor() {
 	SetTool(ToolType::Brush);
@@ -35,15 +36,15 @@ void TileEditor::Update(Rectangle size) {
 
 	// paint
 	std::set<TilePos> reservedPixels = {}; // pixels that wont be drawn when the sprite is drawn
-	if(!pressBeganOutsideEditorRegion && PointInRec(GetMousePosition(), size)) {
+	if(!pressBeganOutsideEditorRegion && PointInRec(GetMousePosition(), size)) { // TODO: Make a wrapper for mouse position in Input
 		tool->Paint(activeTile, &reservedPixels, size);
 	}
 	// If the mouse is outside the draw region and the user presses a mouse button, deactivate painting until they release it 
-	else if(IsMouseButtonPressed(0) || IsMouseButtonPressed(1)) {
+	else if(Input::PrimaryInteractionPressed() || Input::SecondaryInteractionPressed()) {
 		pressBeganOutsideEditorRegion = true;
 	}
 	// reset this as soon as the user releases both mouse buttons.
-	pressBeganOutsideEditorRegion &= IsMouseButtonDown(0) || IsMouseButtonDown(1);
+	pressBeganOutsideEditorRegion &= Input::PrimaryInteractionHeld() || Input::SecondaryInteractionHeld();
 
 	// draw sprite
 	for(int y = 0; y < 16; y++) {
@@ -208,9 +209,9 @@ TileEditor::TilePos TileEditor::TilePos::operator+(const TilePos& rhs) const {
 
 void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
 	
-	Vector2 mousePos = GetMousePosition();
-	bool leftClick = IsMouseButtonDown(0) && !IsMouseButtonPressed(0);
-	bool rightClick = IsMouseButtonDown(1) && !IsMouseButtonPressed(1);
+	Vector2 mousePos = GetMousePosition(); // TODO: Make a wrapper for mouse position in Input
+	bool leftClick = Input::PrimaryInteractionHeld() && !Input::PrimaryInteractionPressed();
+	bool rightClick = Input::SecondaryInteractionHeld() && !Input::SecondaryInteractionPressed();
 	bool userIsInteracting = leftClick || rightClick;
 
 	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
@@ -221,7 +222,7 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 
 		painting = true;
 
-		Vector2 mouseDeltaBetweenFrames = GetMouseDelta();
+		Vector2 mouseDeltaBetweenFrames = GetMouseDelta(); // TODO: Make a wrapper for this in Input
 		TilePos prevMouseTilePos = WindowPosToTilePos({mousePos.x - mouseDeltaBetweenFrames.x, mousePos.y - mouseDeltaBetweenFrames.y}, tileRegion);
 
 		// paint line
@@ -263,9 +264,9 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 }
 void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
 	
-	Vector2 mousePos = GetMousePosition();
-	bool leftClick = IsMouseButtonPressed(0);
-	bool rightClick = IsMouseButtonPressed(1);
+	Vector2 mousePos = GetMousePosition(); // TODO: Make a wrapper for mouse position in Input
+	bool leftClick = Input::PrimaryInteractionPressed();
+	bool rightClick = Input::SecondaryInteractionPressed();
 
 	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
 	ColorIdx paintColorIdx = rightClick ? 0 : TilesetData::GetActiveColorIdx();
@@ -314,9 +315,9 @@ void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 }
 void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
 
-	Vector2 mousePos = GetMousePosition();
-	bool leftClick = IsMouseButtonPressed(0);
-	bool rightClick = IsMouseButtonPressed(1);
+	Vector2 mousePos = GetMousePosition(); // TODO: Make a wrapper for mouse position in Input
+	bool leftClick = Input::PrimaryInteractionPressed();
+	bool rightClick = Input::SecondaryInteractionPressed();
 	bool userIsInteracting = leftClick || rightClick;
 
 	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
@@ -331,7 +332,7 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		std::set<TilePos>* toCheckNext = new std::set<TilePos>({});
 		std::vector<TilePos> fillDirections;
 
-		if(!IsKeyDown(KEY_LEFT_CONTROL)) fillDirections = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+		if(Input::KeybindIsHeld("ToggleFillMode")) fillDirections = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 		else fillDirections = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
 
 		std::vector<ChangeQueue::PaintData> toPaint = {};
@@ -372,10 +373,9 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 }
 void TileEditor::Eyedropper::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
 	
-	bool leftClick = IsMouseButtonPressed(0);
-	bool alt = IsKeyDown(KEY_LEFT_ALT);
+	bool leftClick = Input::PrimaryInteractionPressed();
 	
-	if(leftClick && alt) {
+	if(leftClick) {
 		TilePos mousePos = WindowPosToTilePos(GetMousePosition(), tileRegion);
 		ColorIdx newColor = activeTile->GetPixel(mousePos.x, mousePos.y);
 		
