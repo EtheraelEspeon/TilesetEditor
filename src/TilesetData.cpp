@@ -91,7 +91,7 @@ void ChangeQueue::UndoLatestChange() {
 }
 void ChangeQueue::RedoLatestChange() {
 
-	if(latestChange->next == nullptr && !firstChangeIsUndone) {
+	if(latestChange == nullptr || (latestChange->next == nullptr && !firstChangeIsUndone)) {
 		Logger::Debug("Attempted to redo when end of history");
 		return;
 	}
