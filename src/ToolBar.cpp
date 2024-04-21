@@ -5,6 +5,7 @@
 #include "Logger.hpp"
 #include "GuiSizeInfo.hpp"
 #include "Background.hpp"
+#include "AssetLoader.hpp"
 
 std::vector<ToolBar::Tool> ToolBar::tools = {
 	Tool(TileEditor::ToolType::Eyedropper, "res/toolbar/eyedropper.png"),
@@ -18,8 +19,7 @@ ToolBar::Tool::Tool(TileEditor::ToolType type, std::string iconPath) {
 }
 Texture2D ToolBar::Tool::Texture() {
 	if(!textureInitialized) {
-		
-		
+		tex = AssetLoader::LoadRaylibTexture(texturePath);
 		textureInitialized = true;
 	}
 

@@ -2,11 +2,14 @@
 
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
-Texture2D AssetLoader::LoadTexture(std::string path) {
+#include "../raylib/raylib.h"
+
+Texture2D AssetLoader::LoadRaylibTexture(std::string path) {
 	return TryLoadFile<Texture2D>(
 		path,
-		[](std::string path) { return LoadTexture(path); },
+		[](std::string path) { return LoadTexture(path.c_str()); },
 		[](std::string path) { return LoadTextureFromImage(GenImageColor(16, 16, {255, 0, 255, 255})); }
 	);
 }

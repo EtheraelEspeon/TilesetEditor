@@ -7,7 +7,7 @@
 #include "Logger.hpp"
 
 namespace AssetLoader {
-	Texture2D LoadTexture(std::string path);
+	Texture2D LoadRaylibTexture(std::string path);
 	std::vector<std::string> LoadTextByLine(std::string path);
 
 	/// @brief Checks if a file exists, logs the result, then returns the contents if possible
@@ -18,3 +18,5 @@ namespace AssetLoader {
 	template<typename T>
 	T TryLoadFile(std::string path, std::function<T (std::string)> onSuccess, std::function<T (std::string)> onFail);
 }
+
+#include "AssetLoader.tpp"
