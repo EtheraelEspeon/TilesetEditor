@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <format>
+#include <cmath>
 
 #include "Logger.hpp"
 #include "Input.hpp"
@@ -34,15 +35,17 @@ void TileEditor::Update(Rectangle size) {
 
 	Tile* activeTile = TilesetData::GetActiveTile();
 
-	// paint
-	std::set<TilePos> reservedPixels = {}; // pixels that wont be drawn when the sprite is drawn
-	if(!pressBeganOutsideEditorRegion && PointInRec(GetMousePosition(), size)) { // TODO: Make a wrapper for mouse position in Input
-		tool->Paint(activeTile, &reservedPixels, size);
-	}
 	// If the mouse is outside the draw region and the user presses a mouse button, deactivate painting until they release it 
-	else if(Input::PrimaryInteractionPressed() || Input::SecondaryInteractionPressed()) {
+	if(!CheckCollisionPointRec(GetMousePosition(), size) && (Input::PrimaryInteractionPressed() || Input::SecondaryInteractionPressed())) { // TODO: Make a wrapper for mouse position in Input
 		pressBeganOutsideEditorRegion = true;
 	}
+
+	// paint
+	std::set<TilePos> reservedPixels = {}; // pixels that wont be drawn when the sprite is drawn
+	if(!pressBeganOutsideEditorRegion) {
+		tool->Paint(activeTile, &reservedPixels, size);
+	}
+	
 	// reset this as soon as the user releases both mouse buttons.
 	pressBeganOutsideEditorRegion &= Input::PrimaryInteractionHeld() || Input::SecondaryInteractionHeld();
 
@@ -72,12 +75,12 @@ int TileEditor::sign(int x) {
 	if(x == 0) return 0;
 	return 0;
 }
-TileEditor::TilePos TileEditor::WindowPosToTilePos(Vector2 windowPos, Rectangle tileRegionSize) {
+TileEditor::TilePos TileEditor::WindowPosToTilePos(Vector2 windowPos, Rectangle editorRegion) {
 	Vector2 tilePos = windowPos; // tile that the mouse is over
-	tilePos.x -= tileRegionSize.x;
-	tilePos.y -= tileRegionSize.y;
-	tilePos.x /= (tileRegionSize.width / 16);
-	tilePos.y /= (tileRegionSize.height / 16);
+	tilePos.x -= editorRegion.x;
+	tilePos.y -= editorRegion.y;
+	tilePos.x /= (editorRegion.width / 16);
+	tilePos.y /= (editorRegion.height / 16);
 
 	if      (tilePos.x < 0)  tilePos.x = 0;
 	else if (tilePos.x > 15) tilePos.x = 15;
@@ -86,20 +89,17 @@ TileEditor::TilePos TileEditor::WindowPosToTilePos(Vector2 windowPos, Rectangle 
 
 	return tilePos;
 }
-bool TileEditor::PointInRec(Vector2 point, Rectangle rec) {
-	return point.x > rec.x && point.y > rec.y && point.x < (rec.x + rec.width) && point.y < (rec.y + rec.height);
-}
-Rectangle TileEditor::GetPixelBounds(TilePos tilePos, Rectangle tileRegionSize) {
+Rectangle TileEditor::GetPixelBounds(TilePos tilePos, Rectangle editorRegion) {
 	
 	// floor values
 	tilePos.x = (int)tilePos.x;
 	tilePos.y = (int)tilePos.y;
 
-	int step = tileRegionSize.width / 16;
+	int step = editorRegion.width / 16;
 	
 	Rectangle bounds;
-	bounds.x = tilePos.x * step + tileRegionSize.x;
-	bounds.y = tilePos.y * step + tileRegionSize.y;
+	bounds.x = tilePos.x * step + editorRegion.x;
+	bounds.y = tilePos.y * step + editorRegion.y;
 	bounds.width = step;
 	bounds.height = step;
 
@@ -148,6 +148,28 @@ std::vector<TileEditor::TilePos> TileEditor::LineBetween(TilePos to, TilePos fro
 	}
 
 	return linePositions;
+}
+std::vector<TileEditor::TilePos> TileEditor::CircleAround(TilePos center, float radius) {
+	int integerRadius = std::ceil(radius);
+	int minX, minY, maxX, maxY;
+	minX = std::clamp(center.x - integerRadius, 0, 15);
+	maxX = std::clamp(center.x + integerRadius, 0, 15);
+	minY = std::clamp(center.y - integerRadius, 0, 15);
+	maxY = std::clamp(center.y + integerRadius, 0, 15);
+
+	std::vector<TilePos> out = {};
+	for(int y = minY; y <= maxY; y++) {
+		for(int x = minX; x <= maxX; x++) {
+			float relX = x - center.x;
+			float relY = y - center.y;
+
+			if(relX * relX + relY * relY <= radius * radius) {
+				out.push_back({x, y});
+			}
+		}
+	}
+
+	return out;
 }
 
 TileEditor::Tool* TileEditor::tool = nullptr;
@@ -207,40 +229,46 @@ TileEditor::TilePos TileEditor::TilePos::operator+(const TilePos& rhs) const {
 	return {std::clamp(x + rhs.x, 0, 15), std::clamp(y + rhs.y, 0, 15)};
 }
 
-void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
-	
+void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) {
+
+	if(Input::KeybindIsPressed("GrowBrush"))   radius += 0.5;
+	if(Input::KeybindIsPressed("ShrinkBrush")) radius -= 0.5;
+	radius = std::clamp<float>(radius, 0, 16);
+
 	Vector2 mousePos = GetMousePosition(); // TODO: Make a wrapper for mouse position in Input
 	bool leftClick = Input::PrimaryInteractionHeld() && !Input::PrimaryInteractionPressed();
 	bool rightClick = Input::SecondaryInteractionHeld() && !Input::SecondaryInteractionPressed();
 	bool userIsInteracting = leftClick || rightClick;
+	bool mouseInRegion = CheckCollisionPointRec(mousePos, editorRegion);
 
-	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
+	auto mouseTilePositions = CircleAround(WindowPosToTilePos(mousePos, editorRegion), radius);
 	ColorIdx cursorColor = rightClick ? 0 : TilesetData::GetActiveColorIdx();
 
 	// paint
-	if(userIsInteracting) {
+	if(userIsInteracting && mouseInRegion) {
 
 		painting = true;
 
 		Vector2 mouseDeltaBetweenFrames = GetMouseDelta(); // TODO: Make a wrapper for this in Input
-		TilePos prevMouseTilePos = WindowPosToTilePos({mousePos.x - mouseDeltaBetweenFrames.x, mousePos.y - mouseDeltaBetweenFrames.y}, tileRegion);
+		auto prevMouseTilePositions = CircleAround(WindowPosToTilePos({mousePos.x - mouseDeltaBetweenFrames.x, mousePos.y - mouseDeltaBetweenFrames.y}, editorRegion), radius);
 
-		// paint line
-		auto linePositions = LineBetween(mouseTilePos, prevMouseTilePos);
-		for(auto p : linePositions) {
+		for(int i = 0; i < mouseTilePositions.size(); i++) {
+			// paint line
+			auto linePositions = LineBetween(mouseTilePositions[i], prevMouseTilePositions[i]);
+			for(auto p : linePositions) {
 			
-			ColorIdx currentColor = activeTile->GetPixel(p.x, p.y);
-			if(currentColor == cursorColor || tilePosToBePainted.contains({p.x, p.y})) continue;
+			auto newPaintData = ChangeQueue::PaintData(p.x, p.y, cursorColor);
 
-			tilePosToBePainted.insert({p.x, p.y});
-			paintLocations.push_back(ChangeQueue::PaintData(p.x, p.y, cursorColor));
+			if(tileIndicesToBePainted.contains(newPaintData.pixelIdx)) continue;
+
+			tileIndicesToBePainted.insert(newPaintData.pixelIdx);
+			paintLocations.push_back(newPaintData);
+			}
 		}
 	}
-	else if(painting) {
+	else if(painting) { // if the user stops interacting and was previously painting
 		painting = false;
 
-		// can happen fairly easily.
-		// ex: the user left clicks on a single pixel that's already painted to the same idx as the current color
 		if(!paintLocations.empty()) {
 			ChangeQueue::ApplyChange(
 				ChangeQueue::PaintPixelsAction(paintLocations),
@@ -249,26 +277,32 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 			);
 		}
 
-		tilePosToBePainted.clear();
+		tileIndicesToBePainted.clear();
 		paintLocations.clear();
 	}
 
 	// draw brush cursor and painted locations
-	DrawRectangleRec(GetPixelBounds(mouseTilePos, tileRegion), TilesetData::GetColor(cursorColor));
-	reservedPixels->insert(mouseTilePos);
+	if(mouseInRegion) {
 
-	for(auto p : paintLocations) {
-		DrawRectangleRec(GetPixelBounds(TilePos(p.pixelIdx), tileRegion), TilesetData::GetColor(cursorColor));
-		reservedPixels->insert(TilePos(p.pixelIdx));
+		for(auto p : mouseTilePositions) {
+			DrawRectangleRec(GetPixelBounds(p, editorRegion), TilesetData::GetColor(cursorColor));
+			reservedPixels->insert(p);
+		}
+		for(auto p : paintLocations) {
+			DrawRectangleRec(GetPixelBounds(TilePos(p.pixelIdx), editorRegion), TilesetData::GetColor(cursorColor));
+			reservedPixels->insert(TilePos(p.pixelIdx));
+		}
 	}
 }
-void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
+void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) {
 	
 	Vector2 mousePos = GetMousePosition(); // TODO: Make a wrapper for mouse position in Input
+	if(!CheckCollisionPointRec(mousePos, editorRegion)) return;
+
 	bool leftClick = Input::PrimaryInteractionPressed();
 	bool rightClick = Input::SecondaryInteractionPressed();
 
-	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
+	TilePos mouseTilePos = WindowPosToTilePos(mousePos, editorRegion);
 	ColorIdx paintColorIdx = rightClick ? 0 : TilesetData::GetActiveColorIdx();
 	Color paintColor = TilesetData::GetColor(paintColorIdx);
 
@@ -277,7 +311,7 @@ void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 	switch(state) {
 	case(NoPoints): {
 		// paint preview point
-		DrawRectangleRec(GetPixelBounds(mouseTilePos, tileRegion), paintColor);
+		DrawRectangleRec(GetPixelBounds(mouseTilePos, editorRegion), paintColor);
 		reservedPixels->insert(mouseTilePos);
 		// progress state
 		if(leftClick) {
@@ -289,7 +323,7 @@ void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		auto linePoints = LineBetween(mouseTilePos, startPos);
 		// display preview line
 		for(auto t : linePoints) {
-			DrawRectangleRec(GetPixelBounds(t, tileRegion), paintColor);
+			DrawRectangleRec(GetPixelBounds(t, editorRegion), paintColor);
 			reservedPixels->insert(t);
 		}
 		// progress state
@@ -313,14 +347,16 @@ void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		Logger::Warning("Line tool in invalid state. Rightclick in tile editor region to resolve");
 	}
 }
-void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
+void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) {
 
 	Vector2 mousePos = GetMousePosition(); // TODO: Make a wrapper for mouse position in Input
+	if(!CheckCollisionPointRec(mousePos, editorRegion)) return;
+
 	bool leftClick = Input::PrimaryInteractionPressed();
 	bool rightClick = Input::SecondaryInteractionPressed();
 	bool userIsInteracting = leftClick || rightClick;
 
-	TilePos mouseTilePos = WindowPosToTilePos(mousePos, tileRegion);
+	TilePos mouseTilePos = WindowPosToTilePos(mousePos, editorRegion);
 	ColorIdx paintColor = rightClick ? 0 : TilesetData::GetActiveColorIdx();
 
 	// paint
@@ -332,7 +368,7 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		std::set<TilePos>* toCheckNext = new std::set<TilePos>({});
 		std::vector<TilePos> fillDirections;
 
-		if(Input::KeybindIsHeld("ToggleFillMode")) fillDirections = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+		if(Input::KeybindIsHeld("SwapFillMode")) fillDirections = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 		else fillDirections = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
 
 		std::vector<ChangeQueue::PaintData> toPaint = {};
@@ -368,15 +404,17 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 	}
 
 	// draw brush cursor
-	DrawRectangleRec(GetPixelBounds(mouseTilePos, tileRegion), TilesetData::GetColor(paintColor));
+	DrawRectangleRec(GetPixelBounds(mouseTilePos, editorRegion), TilesetData::GetColor(paintColor));
 	reservedPixels->insert(mouseTilePos);
 }
-void TileEditor::Eyedropper::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle tileRegion) {
-	
+void TileEditor::Eyedropper::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) {
+	// TODO: Make a wrapper for mouse position in Input
+	if(!CheckCollisionPointRec(GetMousePosition(), editorRegion)) return;
+
 	bool leftClick = Input::PrimaryInteractionPressed();
 	
 	if(leftClick) {
-		TilePos mousePos = WindowPosToTilePos(GetMousePosition(), tileRegion);
+		TilePos mousePos = WindowPosToTilePos(GetMousePosition(), editorRegion);
 		ColorIdx newColor = activeTile->GetPixel(mousePos.x, mousePos.y);
 		
 		if(newColor != 0) TilesetData::SetActiveColor(newColor);
