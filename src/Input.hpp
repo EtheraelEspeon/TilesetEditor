@@ -4,17 +4,19 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <functional>
 
 #include "../raylib/raylib.h"
 
 // Singleton
 class Input {
+	struct Key;
 public:
 	static void Initialize();
 
 	struct Keybind {
 		std::string identifier;
-		std::vector<KeyboardKey> keyCombination;
+		std::vector<Key> keyCombination;
 	};
 
 	static bool KeybindIsPressed(std::string identifier);
@@ -29,11 +31,19 @@ public:
 	static bool SecondaryInteractionHeld();
 	static bool SecondaryInteractionReleased();
 private:
+	// Holds closures for getting the state of a key
+	struct Key {
+		Key(std::function<bool()> pressed, std::function<bool()> held, std::function<bool()> released);
+		std::function<bool()> Pressed; // no touchie these pls, c++ doesn't have readonly
+		std::function<bool()> Held;
+		std::function<bool()> Released;
+	};
 	class ConfigParser {
 	public:
 		/// @brief Modifies the state of the Input singleton
 		static void Parse();
 
+		static Key StringToKey(std::string id);
 		static KeyboardKey StringToKeycode(std::string id);
 	};
 

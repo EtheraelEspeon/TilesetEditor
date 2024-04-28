@@ -23,10 +23,10 @@ bool Input::KeybindIsPressed(std::string identifier) {
 		auto key = keybind->keyCombination[i];
 
 		if(i == numKeys - 1) {
-			result &= IsKeyPressed(key);
+			result &= key.Pressed();
 		}
 		else {
-			result &= IsKeyDown(key);
+			result &= key.Held();
 		}
 
 		if(!result) break;
@@ -44,7 +44,7 @@ bool Input::KeybindIsHeld(std::string identifier) {
 	for(int i = 0; i < numKeys; i++) {
 		auto key = keybind->keyCombination[i];
 
-		result &= IsKeyDown(key);
+		result &= key.Held();
 
 		if(!result) break;
 	}
@@ -61,7 +61,7 @@ bool Input::KeybindIsReleased(std::string identifier) {
 	for(int i = 0; i < numKeys; i++) {
 		auto key = keybind->keyCombination[i];
 
-		result &= IsKeyReleased(key);
+		result &= key.Released();
 
 		if(!result) break;
 	}
@@ -111,6 +111,8 @@ Input::Keybind* Input::TryGetKeybind(std::string identifier) {
 	return &(itr->second);
 }
 
+Input::Key::Key(std::function<bool()> pressed, std::function<bool()> held, std::function<bool()> released) : Pressed(pressed), Held(held), Released(released) {}
+
 void Input::ConfigParser::Parse() {
 	auto file = AssetLoader::LoadTextByLine("res/input.cfg");
 
@@ -145,7 +147,7 @@ void Input::ConfigParser::Parse() {
 			int keycodeEnd = i < keySeparators.size() - 1 ? keySeparators[i+1] - 1 : l.size() - 1;
 			std::string keycodeString = l.substr(keySeparators[i] + 1, keycodeEnd - keySeparators[i]);
 
-			kb.keyCombination.push_back(StringToKeycode(keycodeString));
+			kb.keyCombination.push_back(StringToKey(keycodeString));
 		}
 
 		// add the found keybind
@@ -153,6 +155,42 @@ void Input::ConfigParser::Parse() {
 		Inst()->keybinds[kb.identifier] = kb;
 
 	}failed_parsing_line:;}
+}
+
+Input::Key Input::ConfigParser::StringToKey(std::string id) {
+	id = TextToLower(id.c_str());
+	KeyboardKey keycode = StringToKeycode(id);
+
+	if(keycode != KEY_NULL) {
+		return Key(
+			[keycode](){ return IsKeyPressed(keycode);  },
+			[keycode](){ return IsKeyDown(keycode);     },
+			[keycode](){ return IsKeyReleased(keycode); }
+		);
+	}
+	else {
+		if(id == "scrollup") {
+			return Key(
+				[](){ return GetMouseWheelMove() > 0; },
+				[](){ return false; }, // doesn't make sense to
+				[](){ return false; }  // hold or release a scroll
+			);
+		}
+		if(id == "scrolldown") {
+			return Key(
+				[](){ return GetMouseWheelMove() < 0; },
+				[](){ return false; }, // doesn't make sense to
+				[](){ return false; }  // hold or release a scroll
+			);
+		}
+	}
+
+	Logger::Warning(std::format("Could not parse key name \"{}\"", id));
+	return Key(
+		[](){ return false; },
+		[](){ return false; },
+		[](){ return false; } 
+	);
 }
 KeyboardKey Input::ConfigParser::StringToKeycode(std::string id) {
 	id = TextToLower(id.c_str());
@@ -199,6 +237,5 @@ KeyboardKey Input::ConfigParser::StringToKeycode(std::string id) {
 	if(id == "alt")   return KEY_LEFT_ALT;
 	if(id == "shift") return KEY_LEFT_SHIFT;
 
-	Logger::Warning(std::format("Could not parse key name \"{}\"", id));
 	return KEY_NULL;
 }
