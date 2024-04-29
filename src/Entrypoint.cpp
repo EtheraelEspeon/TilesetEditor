@@ -6,6 +6,7 @@
 #include "TilesetData.hpp"
 
 #include "util/Input.hpp"
+#include "util/AssetLoader.hpp"
 
 #include "regions/GuiSizeInfo.hpp"
 #include "regions/Background.hpp"
@@ -15,11 +16,19 @@
 #include "regions/TileEditor.hpp"
 
 int main() {
+
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(1280, 720, "Tileset Editor");
 	SetWindowMinSize(848, 480);
 	SetTargetFPS(60);
 	SetTraceLogLevel(TraceLogLevel::LOG_WARNING);
+
+	if(AssetLoader::TryMakeDir("", "temp")) {
+		Logger::Message("Created temp directory");
+	}
+	else {
+		Logger::Warning("Failed to create temp directory");
+	}
 
 	TilesetData::Initialize();
 	Input::Initialize();

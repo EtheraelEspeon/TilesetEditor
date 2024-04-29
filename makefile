@@ -27,6 +27,7 @@ release:
 
 clean:
 	$(RM) $(EXE_NAME)
+	$(RM) "temp/"
 
 run: all
 	./$(EXE_NAME)

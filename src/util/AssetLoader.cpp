@@ -3,8 +3,13 @@
 #include <filesystem>
 #include <fstream>
 #include <vector>
+#include <format>
 
 #include "../../raylib/raylib.h"
+
+bool AssetLoader::TryMakeDir(std::string path, std::string dirName) {
+	return std::filesystem::create_directories(path + "/" + dirName);
+}
 
 Texture2D AssetLoader::LoadRaylibTexture(std::string path) {
 	return TryLoadFile<Texture2D>(

@@ -14,6 +14,8 @@ namespace AssetLoader {
 	/// @param onFail A lambda responsible for giving some kind of null value if the file doesn't exist
 	template<typename T>
 	T TryLoadFile(std::string path, std::function<T (std::string)> onSuccess, std::function<T (std::string)> onFail);
+	
+	bool TryMakeDir(std::string path, std::string dirName);
 }
 
 #include "AssetLoader.tpp"
