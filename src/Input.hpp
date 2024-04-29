@@ -10,13 +10,12 @@
 
 // Singleton
 class Input {
-	struct Key;
 public:
 	static void Initialize();
 
 	struct Keybind {
 		std::string identifier;
-		std::vector<Key> keyCombination;
+		std::vector<std::string> keyCombination;
 	};
 
 	static bool KeybindIsPressed(std::string identifier);
@@ -33,8 +32,9 @@ public:
 private:
 	// Holds closures for getting the state of a key
 	struct Key {
+		Key();
 		Key(std::function<bool()> pressed, std::function<bool()> held, std::function<bool()> released);
-		std::function<bool()> Pressed; // no touchie these pls, c++ doesn't have readonly
+		std::function<bool()> Pressed;
 		std::function<bool()> Held;
 		std::function<bool()> Released;
 	};
@@ -51,8 +51,9 @@ private:
 	static Input* Inst();
 
 	static Keybind* TryGetKeybind(std::string identifier);
-	std::set<std::string> missingKeybinds = {};
+	std::set<std::string> missingKeybinds = {}; // used to prevent the console from getting spammed when keybinds arent registered
 
+	std::map<std::string, Key> registeredKeys = {};
 	std::map<std::string, Keybind> keybinds = {};
 
 	friend class ConfigParser;

@@ -20,7 +20,7 @@ bool Input::KeybindIsPressed(std::string identifier) {
 
 	int numKeys = keybind->keyCombination.size();
 	for(int i = 0; i < numKeys; i++) {
-		auto key = keybind->keyCombination[i];
+		auto key = Inst()->registeredKeys[keybind->keyCombination[i]];
 
 		if(i == numKeys - 1) {
 			result &= key.Pressed();
@@ -42,7 +42,7 @@ bool Input::KeybindIsHeld(std::string identifier) {
 
 	int numKeys = keybind->keyCombination.size();
 	for(int i = 0; i < numKeys; i++) {
-		auto key = keybind->keyCombination[i];
+		auto key = Inst()->registeredKeys[keybind->keyCombination[i]];
 
 		result &= key.Held();
 
@@ -55,16 +55,18 @@ bool Input::KeybindIsReleased(std::string identifier) {
 	auto keybind = TryGetKeybind(identifier);
 	if(keybind == nullptr) return false;
 	
+	bool allAreHeld = true;
 	bool result = true;
 
 	int numKeys = keybind->keyCombination.size();
 	for(int i = 0; i < numKeys; i++) {
-		auto key = keybind->keyCombination[i];
+		auto key = Inst()->registeredKeys[keybind->keyCombination[i]];
 
-		result &= key.Released();
-
-		if(!result) break;
+		bool held = key.Held();
+		allAreHeld &= held;
+		result &= key.Released() || held;
 	}
+	result &= !allAreHeld;
 
 	return result;
 }
@@ -111,7 +113,12 @@ Input::Keybind* Input::TryGetKeybind(std::string identifier) {
 	return &(itr->second);
 }
 
-Input::Key::Key(std::function<bool()> pressed, std::function<bool()> held, std::function<bool()> released) : Pressed(pressed), Held(held), Released(released) {}
+Input::Key::Key() {};
+Input::Key::Key(std::function<bool()> pressed, std::function<bool()> held, std::function<bool()> released) {
+	Pressed = pressed;
+	Held = held;
+	Released = released;
+}
 
 void Input::ConfigParser::Parse() {
 	auto file = AssetLoader::LoadTextByLine("res/input.cfg");
@@ -119,11 +126,11 @@ void Input::ConfigParser::Parse() {
 	for(auto l : file) {{
 		if(l == "") continue;
 
-		// find indices = and +
+		// find indices of = and + symbols
 		int assignmentIdx = -1;
-		std::vector<int> keySeparators = {};
+		std::vector<int> keySeparators = {}; // the found indices
 		for(int i = 0; i < l.size(); i++) {
-			if(l[i] == '=') {
+			if(l[i] == '=') { // find the assignment
 				if(assignmentIdx != -1) {
 					Logger::Warning(std::format("Multiple assignments in input config line \"{}\"", l));
 					goto failed_parsing_line;
@@ -131,11 +138,11 @@ void Input::ConfigParser::Parse() {
 				assignmentIdx = i;
 				keySeparators.push_back(i);
 			}
-			if(l[i] == '+') {
+			if(l[i] == '+') { // found a separator between two keys
 				keySeparators.push_back(i);
 			}
 		}
-		if(assignmentIdx == -1) {
+		if(assignmentIdx == -1) { // if we failed to find the assignment
 			Logger::Warning(std::format("No assignment in input config line \"{}\"", l));
 			goto failed_parsing_line;
 		}
@@ -144,10 +151,19 @@ void Input::ConfigParser::Parse() {
 		Keybind kb;
 		kb.identifier = l.substr(0, assignmentIdx);
 		for(int i = 0; i < keySeparators.size(); i++) {
+			// if this isnt the last separator, base it off the idx of the next separator
+			// otherwise, set it to the end of the string
 			int keycodeEnd = i < keySeparators.size() - 1 ? keySeparators[i+1] - 1 : l.size() - 1;
+			
+			// string name of the keycode (ex: "A", "Ctrl", "ScrollUp")
 			std::string keycodeString = l.substr(keySeparators[i] + 1, keycodeEnd - keySeparators[i]);
 
-			kb.keyCombination.push_back(StringToKey(keycodeString));
+			// register the key if it isnt already known
+			if(!Inst()->registeredKeys.contains(keycodeString)) {
+				Inst()->registeredKeys.insert({keycodeString, StringToKey(keycodeString)});
+			}
+
+			kb.keyCombination.push_back(keycodeString);
 		}
 
 		// add the found keybind
