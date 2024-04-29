@@ -45,7 +45,7 @@ void ToolBar::Update(Rectangle size) {
 	if(Input::KeybindIsPressed("SwapTool_Line"))       SoftSwitchTool(TileEditor::ToolType::Line);
 	if(Input::KeybindIsPressed("SwapTool_Eyedropper")) SoftSwitchTool(TileEditor::ToolType::Eyedropper);
 
-	bool shouldRevertSoftSwitch = Input::KeybindIsHeld("SwapTool_Line") || Input::KeybindIsHeld("SwapTool_Eyedropper");
+	bool shouldRevertSoftSwitch = Input::KeybindIsReleased("SwapTool_Line") || Input::KeybindIsReleased("SwapTool_Eyedropper");
 	if(shouldRevertSoftSwitch) RevertSoftSwitch();
 
 	/* ---- draw the buttons and poll input ---- */
