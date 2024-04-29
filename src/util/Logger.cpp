@@ -21,10 +21,10 @@ void Logger::Error(std::string message) {
 
 std::string Logger::SeverityAsString(Severity severity) {
 	switch(severity) {
-		case(Severity::Debug): return "Debug";
+		case(Severity::Debug):   return "Debug  ";
 		case(Severity::Message): return "Message";
 		case(Severity::Warning): return "Warning";
-		case(Severity::Error): return "Error";
+		case(Severity::Error):   return "Error  ";
 		default: return "Severity";
 	}
 }
