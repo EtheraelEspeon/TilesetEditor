@@ -6,7 +6,7 @@
 #include <set>
 #include <functional>
 
-#include "../raylib/raylib.h"
+#include "../../raylib/raylib.h"
 
 // Singleton
 class Input {

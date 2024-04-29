@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "../raylib/raygui.h"
+#include "../../raylib/raygui.h"
 
 class PaletteEditor {
 public:

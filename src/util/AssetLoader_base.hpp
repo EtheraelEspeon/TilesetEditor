@@ -3,13 +3,10 @@
 #include <functional>
 #include <vector>
 
-#include "../raylib/raylib.h"
+#include "../../raylib/raylib.h"
 #include "Logger.hpp"
 
 namespace AssetLoader {
-	Texture2D LoadRaylibTexture(std::string path);
-	std::vector<std::string> LoadTextByLine(std::string path);
-
 	/// @brief Checks if a file exists, logs the result, then returns the contents if possible
 	/// @tparam T The type to return
 	/// @param path The path to the target file

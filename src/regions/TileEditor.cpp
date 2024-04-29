@@ -4,8 +4,8 @@
 #include <format>
 #include <cmath>
 
-#include "Logger.hpp"
-#include "Input.hpp"
+#include "../util/Logger.hpp"
+#include "../util/Input.hpp"
 
 TileEditor::TileEditor() {
 	SetTool(ToolType::Brush);

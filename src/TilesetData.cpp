@@ -2,7 +2,7 @@
 
 #include <format>
 
-#include "Logger.hpp"
+#include "util/Logger.hpp"
 
 Tile::Tile() {
 	colorData.fill(0);

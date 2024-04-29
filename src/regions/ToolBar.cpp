@@ -2,11 +2,12 @@
 
 #include <filesystem>
 
-#include "Logger.hpp"
 #include "GuiSizeInfo.hpp"
 #include "Background.hpp"
-#include "AssetLoader.hpp"
-#include "Input.hpp"
+
+#include "../util/AssetLoader.hpp"
+#include "../util/Logger.hpp"
+#include "../util/Input.hpp"
 
 std::vector<ToolBar::Tool> ToolBar::tools = {
 	Tool(TileEditor::ToolType::Eyedropper, "res/toolbar/eyedropper.png"),

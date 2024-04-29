@@ -3,9 +3,9 @@
 #include <cstdint>
 #include <set>
 
-#include "../raylib/raygui.h"
+#include "../../raylib/raygui.h"
 
-#include "TilesetData.hpp"
+#include "../TilesetData.hpp"
 
 class TileEditor {
 public:

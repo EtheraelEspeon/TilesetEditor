@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#include "../raylib/raylib.h"
+#include "../../raylib/raylib.h"
 
 struct GuiSizeInfo {
 

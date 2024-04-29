@@ -4,20 +4,22 @@
 #include "../raylib/raygui.h"
 
 #include "TilesetData.hpp"
-#include "Input.hpp"
-#include "GuiSizeInfo.hpp"
 
-#include "Background.hpp"
-#include "PaletteEditor.hpp"
-#include "ColorPicker.hpp"
-#include "ToolBar.hpp"
-#include "TileEditor.hpp"
+#include "util/Input.hpp"
+
+#include "regions/GuiSizeInfo.hpp"
+#include "regions/Background.hpp"
+#include "regions/PaletteEditor.hpp"
+#include "regions/ColorPicker.hpp"
+#include "regions/ToolBar.hpp"
+#include "regions/TileEditor.hpp"
 
 int main() {
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(1280, 720, "Tileset Editor");
 	SetWindowMinSize(848, 480);
 	SetTargetFPS(60);
+	SetTraceLogLevel(TraceLogLevel::LOG_WARNING);
 
 	TilesetData::Initialize();
 	Input::Initialize();

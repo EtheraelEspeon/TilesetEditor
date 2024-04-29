@@ -2,8 +2,8 @@
 
 #include <format>
 
-#include "Logger.hpp"
-#include "Input.hpp"
+#include "../util/Logger.hpp"
+#include "../util/Input.hpp"
 
 void ColorPicker::Update(Rectangle size) {
 	

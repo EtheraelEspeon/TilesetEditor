@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../raylib/raygui.h"
+#include "../../raylib/raygui.h"
 
-#include "TilesetData.hpp"
+#include "../TilesetData.hpp"
 
 class ColorPicker {
 public:

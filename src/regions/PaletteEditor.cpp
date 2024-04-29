@@ -3,9 +3,10 @@
 #include <string>
 #include <format>
 
-#include "TilesetData.hpp"
-#include "Logger.hpp"
-#include "Input.hpp"
+#include "../TilesetData.hpp"
+
+#include "../util/Logger.hpp"
+#include "../util/Input.hpp"
 
 void PaletteEditor::Update(Rectangle size){
 
