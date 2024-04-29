@@ -44,7 +44,7 @@ ChangeQueue::RedoAction ChangeQueue::PaintPixelsAction(std::vector<PaintData> pa
 
 ChangeQueue::Change::~Change() {
 	if(next != nullptr) delete next;
-	Logger::Debug("Deleted change");
+	//Logger::Debug("Deleted change");
 }
 void ChangeQueue::ApplyChange(RedoAction redo, UndoAction undo, Tile* activeTile) {
 	if(firstChangeIsUndone == true) {
@@ -55,14 +55,14 @@ void ChangeQueue::ApplyChange(RedoAction redo, UndoAction undo, Tile* activeTile
 	
 	if(latestChange == nullptr) {
 		latestChange = new Change();
-		Logger::Debug("Initialized change history tree");
+		//Logger::Debug("Initialized change history tree");
 	}
 	else {
 		if(latestChange->next != nullptr) delete latestChange->next; 
 		latestChange->next = new Change();
 		latestChange->next->prev = latestChange;
 		latestChange = latestChange->next;
-		Logger::Debug("Appended new change to history tree");
+		//Logger::Debug("Appended new change to history tree");
 	}
 
 	latestChange->redo = redo;
@@ -74,12 +74,12 @@ void ChangeQueue::ApplyChange(RedoAction redo, UndoAction undo, Tile* activeTile
 void ChangeQueue::UndoLatestChange() {
 
 	if(latestChange == nullptr || firstChangeIsUndone) {
-		Logger::Debug("Attempted to undo while at the beginning of history");
+		//Logger::Debug("Attempted to undo while at the beginning of history");
 		return;
 	}
 
 	if(TilesetData::TileIsDeleted(latestChange->targetTile)) {
-		Logger::Debug("Attempted to undo an action on a deleted tile, recurring");
+		//Logger::Debug("Attempted to undo an action on a deleted tile, recurring");
 		latestChange = latestChange->prev;
 		UndoLatestChange(); // This might overflow the stack? Seems unlikely.
 	}
@@ -92,7 +92,7 @@ void ChangeQueue::UndoLatestChange() {
 void ChangeQueue::RedoLatestChange() {
 
 	if(latestChange == nullptr || (latestChange->next == nullptr && !firstChangeIsUndone)) {
-		Logger::Debug("Attempted to redo when end of history");
+		//Logger::Debug("Attempted to redo when end of history");
 		return;
 	}
 	
@@ -100,7 +100,7 @@ void ChangeQueue::RedoLatestChange() {
 	else firstChangeIsUndone = false;
 
 	if(TilesetData::TileIsDeleted(latestChange->targetTile)) {
-		Logger::Debug("Attempted to redo an action on a deleted tile, recurring");
+		//Logger::Debug("Attempted to redo an action on a deleted tile, recurring");
 		latestChange = latestChange->next;
 		RedoLatestChange(); // This might overflow the stack? Seems unlikely.
 	}
