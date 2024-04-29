@@ -67,7 +67,7 @@ private:
 		bool painting = false;
 		std::vector<ChangeQueue::PaintData> paintLocations;
 		std::set<uint8_t> tileIndicesToBePainted;
-		float radius = 1;
+		float radius = 0;
 	};
 	struct Line : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) override;
