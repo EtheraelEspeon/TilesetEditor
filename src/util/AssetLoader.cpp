@@ -8,7 +8,10 @@
 #include "../../raylib/raylib.h"
 
 bool AssetLoader::TryMakeDir(std::string path, std::string dirName) {
-	return std::filesystem::create_directories(path + "/" + dirName);
+	bool createdDir = std::filesystem::create_directories(path + "/" + dirName);
+	bool dirExists = std::filesystem::exists(path + "/" + dirName);
+
+	return (!createdDir && dirExists) || (createdDir && dirExists); // catches the case where we didn't create the dir because it already existed
 }
 
 Texture2D AssetLoader::LoadRaylibTexture(std::string path) {
