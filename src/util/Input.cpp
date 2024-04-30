@@ -167,7 +167,7 @@ void Input::ConfigParser::Parse() {
 		}
 
 		// add the found keybind
-		Logger::Debug(std::format("Loaded keybind \"{}\" with keycode {}", kb.identifier, l.substr(keySeparators[0] + 1)));
+		//Logger::Debug(std::format("Loaded keybind \"{}\" with keycode {}", kb.identifier, l.substr(keySeparators[0] + 1)));
 		Inst()->keybinds[kb.identifier] = kb;
 
 	}failed_parsing_line:;}
