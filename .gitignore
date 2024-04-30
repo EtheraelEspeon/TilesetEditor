@@ -1,5 +1,7 @@
 *.code-workspace
 .vscode/
+obj/
+temp/
 
 *.exe
 *.dll

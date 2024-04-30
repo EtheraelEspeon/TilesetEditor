@@ -1,36 +1,52 @@
-rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d)) # terrifying expression that recursively iterates through files
 
-ifeq ($(OS),Windows_NT)
-EXE_NAME=TilesetEditor.exe
-RM=del
-PLATFORM_FLAGS=-Wl,-subsystem,console "-DWINDOWS="
+ifeq ($(OS), Windows_NT)
+APP_NAME=TilesetEditor.exe
+RM_COMMAND=rd /s /q
+WINDOWS_MACROS="WINDOWS="
+WINDOWS_LINKER_FLAGS=-subsystem,console
+make_directory = mkdir $(subst /,\, $(1))
 else
-EXE_NAME=TilesetEditor.o
+APP_NAME=TilesetEditor.o
+RM_COMMAND=rm -rf
 PLATFORM_FLAGS=
+make_directory = mkdir $(1)
 endif
 
-SOURCES=$(call rwildcard,.,*.cpp)
+LIB_FILES="raylib"
+CPP_VER=c++20
+LIB_SEARCH_PATH=./
 
-CFLAGS=-L. -std=c++20
+SRC_DIR = ./src
+OBJ_DIR = ./obj
+TMP_DIR = ./temp
 
-CFLAGS_DEBUG="-DDEBUG=" -g
+# find all the files we care about
 
-CFLAGS_RELEASE=-O3
+SRC_FILES = $(call rwildcard,.,*.cpp) # grab all the .cpp files in the src directory
+OBJ_FILES = $(patsubst $(SRC_DIR)%.cpp, $(OBJ_DIR)%.o, $(SRC_FILES)) # substitute src/*.cpp with obj/*.o in the found source files
 
-BUILD_COMMAND = g++ -o $(EXE_NAME) $(SOURCES) $(PLATFORM_FLAGS) $(CFLAGS) -l "raylib"
+# declare all the targets
 
-all: 
-	$(BUILD_COMMAND) $(CFLAGS_DEBUG)
+.PHONY: build run clean
 
-release:
-	$(BUILD_COMMAND) $(CFLAGS_RELEASE)
+test:
+	echo src files: $(SRC_FILES)
+	echo obj files: $(OBJ_FILES)
+
+build: $(OBJ_FILES)
+	-$(RM_COMMAND) $(APP_NAME)
+	g++ -Wl,$(WINDOWS_LINKER_FLAGS) -l$(LIB_FILES) -D$(WINDOWS_MACROS) -L$(LIB_SEARCH_PATH) -std=$(CPP_VER) -o $(APP_NAME) $(OBJ_FILES)
+
+# Define a target for each object file in the obj dir that depends on its corresponding src file
+# $@ is the name of the target, $< is the name of the first prereq
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	-$(call make_directory,$(dir $@))
+	g++ -c -o $@ $< -std=$(CPP_VER)
+
+run: build
+	$(APP_NAME)
 
 clean:
-	$(RM) $(EXE_NAME)
-	$(RM) "temp/"
-
-run: all
-	./$(EXE_NAME)
-
-debug: all
-	gdb $(EXE_NAME)
+	-$(RM_COMMAND) "$(TMP_DIR)"
+	-$(RM_COMMAND) "$(OBJ_DIR)"
