@@ -12,6 +12,7 @@
 #include "regions/Background.hpp"
 #include "regions/PaletteEditor.hpp"
 #include "regions/ColorPicker.hpp"
+#include "regions/TileSelector.hpp"
 #include "regions/ToolBar.hpp"
 #include "regions/TileEditor.hpp"
 
@@ -35,6 +36,7 @@ int main() {
 
 	PaletteEditor paletteEditor;
 	ColorPicker colorPicker;
+	TileSelector tileSelector;
 	ToolBar toolBar;
 	TileEditor tileEditor;
 
@@ -57,7 +59,7 @@ int main() {
 
 		paletteEditor.Update(info.PaletteEditor());
 		colorPicker.Update(info.ColorPicker());
-		// tileSelector
+		tileSelector.Update(info.TileSelector());
 		toolBar.Update(info.ToolBar());
 		tileEditor.Update(info.TileEditor());
 

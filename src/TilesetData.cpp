@@ -130,6 +130,12 @@ void TilesetData::DeleteTile(int tileIdx) {
 Tile* TilesetData::GetTile(int tileIdx) {
 	return &(*ItrFromTileIdx(tileIdx));
 }
+int TilesetData::NumTiles() {
+	return Inst()->tiles.size();
+}
+void TilesetData::AddTile() {
+	Inst()->tiles.push_back(Tile());
+}
 
 void TilesetData::SetColor(ColorIdx colorIdx, Color color) {
 	if(colorIdx == 0) {

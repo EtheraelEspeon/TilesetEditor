@@ -40,7 +40,11 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	colorPicker.width = paletteEditor.width;
 
 	/* --- set Tile Selector size --- */
-	tileSelector = rightRegion;
+	tileSelector.x = rightRegion.x + RightRegionPadding;
+	tileSelector.y = RightRegionPadding;
+	tileSelector.width = rightRegion.width - 2 * RightRegionPadding;
+	tileSelector.height = rightRegion.height - 2 * RightRegionPadding;
+	tileSelector.width = (int)(tileSelector.width / 16) * 16;
 
 	/* --- set Menu Bar size --- */
 	menuBar.width = centerRegion.width;

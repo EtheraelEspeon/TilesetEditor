@@ -79,6 +79,8 @@ public:
 
 	static void DeleteTile(int tileIdx);
 	static Tile* GetTile(int tileIdx);
+	static int NumTiles();
+	static void AddTile();
 
 	static Color GetColor(ColorIdx colorIdx);
 	static void SetColor(ColorIdx colorIdx, Color color);
