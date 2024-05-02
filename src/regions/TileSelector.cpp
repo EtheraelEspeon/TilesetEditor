@@ -39,7 +39,20 @@ void TileSelector::UpdateScroll(Rectangle region, float unitHeight) {
 		if(Input::KeybindIsPressed("ScrollTileEditorUp"))   targetViewportPos--;
 		if(Input::KeybindIsPressed("ScrollTileEditorDown")) targetViewportPos++;
 	}
-	targetViewportPos = std::clamp<float>(targetViewportPos, 0, TilesetData::NumTiles() - 1);
+	float maxY = TilesetData::NumTiles() - 1;
+
+	if(targetViewportPos < 0) {
+		float dydt = -targetViewportPos;
+		targetViewportPos += dydt * Timestep * ScrollSpeed * 3;
+
+		if(targetViewportPos > 0) targetViewportPos = 0;
+	}
+	if(targetViewportPos > maxY) {
+		float dydt = maxY - targetViewportPos;
+		targetViewportPos += dydt * Timestep * ScrollSpeed * 3;
+
+		if(targetViewportPos < maxY) targetViewportPos = maxY;
+	}
 
 	if(viewportPos != targetViewportPos) {
 		float dydt = targetViewportPos - viewportPos;
