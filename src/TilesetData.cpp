@@ -116,7 +116,7 @@ void TilesetData::Initialize() {
 		SetColor(i + 1, ColorFromHSV((float)i * 360.0 / 15.0, 0.8, 1));
 	}
 
-	Inst()->tiles.push_back(Tile());
+	Inst()->tiles.push_back(new Tile());
 
 	Logger::Message("Initialized new tileset!");	
 }
@@ -128,13 +128,13 @@ void TilesetData::DeleteTile(int tileIdx) {
 	Inst()->tiles.erase(itr);
 }
 Tile* TilesetData::GetTile(int tileIdx) {
-	return &(*ItrFromTileIdx(tileIdx));
+	return *ItrFromTileIdx(tileIdx);
 }
 int TilesetData::NumTiles() {
 	return Inst()->tiles.size();
 }
 void TilesetData::AddTile() {
-	Inst()->tiles.push_back(Tile());
+	Inst()->tiles.push_back(new Tile());
 }
 
 void TilesetData::SetColor(ColorIdx colorIdx, Color color) {
@@ -176,7 +176,7 @@ TilesetData* TilesetData::Inst() {
 	return inst;
 }
 
-std::list<Tile>::iterator TilesetData::ItrFromTileIdx(int tileIdx) {
+std::list<Tile*>::iterator TilesetData::ItrFromTileIdx(int tileIdx) {
 	auto itr = inst->tiles.begin();
 	std::advance(itr, tileIdx);
 	return itr;

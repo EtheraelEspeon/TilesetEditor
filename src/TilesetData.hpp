@@ -75,35 +75,50 @@ private:
 // Singleton
 class TilesetData {
 public:
+	/// @brief Initialize the data singleton
 	static void Initialize();
 
+	/// @brief Marks the tile at tileIdx as deleted
 	static void DeleteTile(int tileIdx);
+	/// @return a pointer to the tile at tileIdx 
 	static Tile* GetTile(int tileIdx);
+	/// @return the number of (non-deleted) tiles
 	static int NumTiles();
+	/// @brief Pushes a tile to the end of the tile list
 	static void AddTile();
 
+	/// @return the color in the palette at idx colorIdx
 	static Color GetColor(ColorIdx colorIdx);
+	/// @brief sets the color at idx colorIdx to color 
 	static void SetColor(ColorIdx colorIdx, Color color);
 
+	/// @return the currently selected color
 	static Color GetActiveColor();
+	/// @return the currently selected color's idx
 	static int GetActiveColorIdx();
+	/// @brief Sets the active color idx to colorIdx
 	static void SetActiveColor(ColorIdx colorIdx);
 
+	/// @return a pointer to the currently selected tile
 	static Tile* GetActiveTile();
+	/// @brief selects the tile at idx tileIdx 
 	static void SetActiveTile(int tileIdx);
 
+	/// @return if a tile at memory location tileLocation is marked as deleted, to check for dangling pointers
 	static bool TileIsDeleted(void* tileLocation);
 
 private:
-	static TilesetData* Inst(); // checks for null before returning a pointer to the instance
+	/// @brief Checks for null before returning the pointer to the current instance 
+	static TilesetData* Inst();
 	static TilesetData* inst;
 
 	std::array<Color, 15> palette;
-	std::list<Tile> tiles; // cache locality doesnt really matter for this, i'd rather be able to delete elements without invalidating pointers.
+	std::list<Tile*> tiles; // cache locality doesnt really matter for this, i'd rather be able to rearrange elements without invalidating pointers.
 	std::set<void*> deletedTileLocations = {};
 
-	static std::list<Tile>::iterator ItrFromTileIdx(int tileIdx);
+	/// @return an iterator pointing to the tile at tileIdx 
+	static std::list<Tile*>::iterator ItrFromTileIdx(int tileIdx);
 
-	int activeTileIdx = 0;
-	int activeColorIdx = 1;
+	int activeTileIdx = 0;  // >= 0
+	int activeColorIdx = 1; // [1, 15]
 };
