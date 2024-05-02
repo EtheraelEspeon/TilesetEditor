@@ -43,11 +43,10 @@ void ToolBar::Update(Rectangle size) {
 	if(Input::KeybindIsPressed("SetTool_Brush")) HardSwitchTool(TileEditor::ToolType::Brush);
 	if(Input::KeybindIsPressed("SetTool_Fill"))  HardSwitchTool(TileEditor::ToolType::Fill);
 	// soft switches
-	if(Input::KeybindIsPressed("SwapTool_Line"))       SoftSwitchTool(TileEditor::ToolType::Line);
-	if(Input::KeybindIsPressed("SwapTool_Eyedropper")) SoftSwitchTool(TileEditor::ToolType::Eyedropper);
-
-	bool shouldRevertSoftSwitch = Input::KeybindIsReleased("SwapTool_Line") || Input::KeybindIsReleased("SwapTool_Eyedropper");
-	if(shouldRevertSoftSwitch) RevertSoftSwitch();
+	if(Input::KeybindIsPressed ("SwapTool_Line")) SoftSwitchTool  (TileEditor::ToolType::Line);
+	if(Input::KeybindIsReleased("SwapTool_Line")) RevertSoftSwitch(TileEditor::ToolType::Line);
+	if(Input::KeybindIsPressed ("SwapTool_Eyedropper")) SoftSwitchTool  (TileEditor::ToolType::Eyedropper);
+	if(Input::KeybindIsReleased("SwapTool_Eyedropper")) RevertSoftSwitch(TileEditor::ToolType::Eyedropper);
 
 	/* ---- draw the buttons and poll input ---- */
 
@@ -82,10 +81,24 @@ void ToolBar::HardSwitchTool(TileEditor::ToolType toolType) {
 	TileEditor::SetTool(toolType);
 }
 void ToolBar::SoftSwitchTool(TileEditor::ToolType toolType) {
+	if(prevToolType != TileEditor::ToolType::Null) {
+		//Logger::Debug("Tried to soft switch tools in a soft switch");
+		return;
+	}
+
 	prevToolType = TileEditor::CurrentTool();
 	TileEditor::SetTool(toolType);
 }
-void ToolBar::RevertSoftSwitch() {
+void ToolBar::RevertSoftSwitch(TileEditor::ToolType expectedToolType) {
+	if(prevToolType == TileEditor::ToolType::Null) {
+		//Logger::Debug("Tried to revert soft switch outside of a soft switch");
+		return;
+	}
+	if(expectedToolType != TileEditor::CurrentTool()) {
+		//Logger::Debug("Tried to revert someone else's soft switch");
+		return;
+	}
+
 	TileEditor::SetTool(prevToolType);
 	prevToolType = TileEditor::ToolType::Null;
 }

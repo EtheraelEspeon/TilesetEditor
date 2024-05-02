@@ -31,5 +31,5 @@ private:
 
 	void HardSwitchTool(TileEditor::ToolType toolType);
 	void SoftSwitchTool(TileEditor::ToolType toolType);
-	void RevertSoftSwitch();
+	void RevertSoftSwitch(TileEditor::ToolType expectedToolType);
 };
