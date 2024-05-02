@@ -1,10 +1,10 @@
 *.code-workspace
 .vscode/
-obj/
-temp/
+
+obj
+temp
+release
 
 *.exe
 *.dll
 *.o
-
-temp/*
