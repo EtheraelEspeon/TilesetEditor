@@ -175,10 +175,9 @@ std::vector<TileEditor::TilePos> TileEditor::CircleAround(TilePos center, float 
 TileEditor::Tool* TileEditor::tool = nullptr;
 TileEditor::ToolType TileEditor::currentTool = ToolType::Null;
 void TileEditor::SetTool(ToolType toolType) {
-	
-	currentTool = toolType;
 
-	if(!tool) delete tool;
+	Tool* oldToolPtr = tool;
+
 	switch(toolType) {
 	case(ToolType::Brush):
 		tool = new Brush();
@@ -193,9 +192,14 @@ void TileEditor::SetTool(ToolType toolType) {
 		tool = new Eyedropper();
 		break;
 	default:
-		tool = nullptr;
-		Logger::Error("Tried to set invalid tool type");
+		Logger::Warning(std::format("Tried to set invalid tool type {}", (int)toolType));
+		return;
 	}
+
+	// Returns early if things go wrong.
+	// If control flow reaches here, things went smoothly
+	currentTool = toolType;
+	if(oldToolPtr != nullptr) delete oldToolPtr;
 }
 TileEditor::ToolType TileEditor::CurrentTool() { return currentTool; }
 
