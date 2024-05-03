@@ -92,18 +92,6 @@ public:
 	/// @brief sets the color at idx colorIdx to color 
 	static void SetColor(ColorIdx colorIdx, Color color);
 
-	/// @return the currently selected color
-	static Color GetActiveColor();
-	/// @return the currently selected color's idx
-	static int GetActiveColorIdx();
-	/// @brief Sets the active color idx to colorIdx
-	static void SetActiveColor(ColorIdx colorIdx);
-
-	/// @return a pointer to the currently selected tile
-	static Tile* GetActiveTile();
-	/// @brief selects the tile at idx tileIdx 
-	static void SetActiveTile(int tileIdx);
-
 	/// @return if a tile at memory location tileLocation is marked as deleted, to check for dangling pointers
 	static bool TileIsDeleted(void* tileLocation);
 

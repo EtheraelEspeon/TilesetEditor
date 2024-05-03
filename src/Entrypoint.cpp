@@ -34,11 +34,11 @@ int main() {
 	TilesetData::Initialize();
 	Input::Initialize();
 
-	PaletteEditor paletteEditor;
+	PaletteEditor::Initialize();
 	ColorPicker colorPicker;
 	TileSelector tileSelector;
 	ToolBar toolBar;
-	TileEditor tileEditor;
+	TileEditor::Initialize();
 
 	while(!WindowShouldClose()) {
 		BeginDrawing();
@@ -57,11 +57,11 @@ int main() {
 		DrawRectangleRec(info.MenuBar(), WHITE);
 		//DrawRectangleRec(info.ToolBar(), RED);
 
-		paletteEditor.Update(info.PaletteEditor());
+		PaletteEditor::Inst()->Update(info.PaletteEditor());
 		colorPicker.Update(info.ColorPicker());
 		tileSelector.Update(info.TileSelector());
 		toolBar.Update(info.ToolBar());
-		tileEditor.Update(info.TileEditor());
+		TileEditor::Inst()->Update(info.TileEditor());
 
 		/*
 		Draw Order:

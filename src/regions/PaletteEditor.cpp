@@ -8,6 +8,16 @@
 #include "../util/Logger.hpp"
 #include "../util/Input.hpp"
 
+PaletteEditor* PaletteEditor::instance = nullptr;
+void PaletteEditor::Initialize() {
+	if(instance != nullptr) delete instance;
+	instance = new PaletteEditor();
+}
+PaletteEditor* PaletteEditor::Inst() {
+	if(instance == nullptr) Logger::Error("Palette Editor uninitialized");
+	return instance;
+}
+
 void PaletteEditor::Update(Rectangle size){
 
 	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_WIDTH, 6);
@@ -49,16 +59,16 @@ void PaletteEditor::Update(Rectangle size){
 			std::string idxStr = std::to_string(buttonIdx);
 			
 			// make the selected color's button disabled to highlight its border
-			if(buttonIdx == TilesetData::GetActiveColorIdx()) GuiDisable();
-			if(GuiButton(bounds, idxStr.c_str())) TilesetData::SetActiveColor(buttonIdx);
-			if(buttonIdx == TilesetData::GetActiveColorIdx()) GuiEnable();
+			if(buttonIdx == activeColor) GuiDisable();
+			if(GuiButton(bounds, idxStr.c_str())) activeColor = buttonIdx;
+			if(buttonIdx == activeColor) GuiEnable();
 			
 			buttonIdx++;
 		}
 	}
 
 	if(Input::KeybindIsPressed("CopyColor")) {
-		Color c = TilesetData::GetActiveColor();
+		Color c = ActiveColor();
 			uint32_t colorInt = ColorToInt(c);
 			std::string colorHexCode = std::format("{0:8x}", colorInt);
 			
@@ -104,7 +114,17 @@ void PaletteEditor::Update(Rectangle size){
 			multiplier *= 16;
 		}
 
-		TilesetData::SetColor(TilesetData::GetActiveColorIdx(), GetColor(colorInt));
+		TilesetData::SetColor(activeColor, GetColor(colorInt));
 		Logger::Debug("Pasted " + colorHexCode + " (" + std::format("{0:8x}", colorInt) + ")");
 	}
+}
+
+void PaletteEditor::SetActiveColorIdx(ColorIdx idx) {
+	Inst()->activeColor = idx;
+}
+ColorIdx PaletteEditor::ActiveColorIdx() {
+	return Inst()->activeColor;
+}
+Color PaletteEditor::ActiveColor() {
+	return TilesetData::GetColor(Inst()->activeColor);
 }

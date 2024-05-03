@@ -150,23 +150,6 @@ Color TilesetData::GetColor(ColorIdx colorIdx) {
 	return Inst()->palette[colorIdx - 1];
 }
 
-Color TilesetData::GetActiveColor() {
-	return GetColor(Inst()->activeColorIdx);
-}
-int TilesetData::GetActiveColorIdx() {
-	return Inst()->activeColorIdx;
-}
-void TilesetData::SetActiveColor(ColorIdx colorIdx) {
-	Inst()->activeColorIdx = colorIdx;
-}
-
-Tile* TilesetData::GetActiveTile() {
-	return GetTile(Inst()->activeTileIdx);
-}
-void TilesetData::SetActiveTile(int tileIdx) {
-	Inst()->activeTileIdx = tileIdx;
-}
-
 bool TilesetData::TileIsDeleted(void* tileLocation) {
 	return Inst()->deletedTileLocations.contains(tileLocation);
 }

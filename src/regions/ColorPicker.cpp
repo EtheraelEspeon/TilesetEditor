@@ -2,12 +2,14 @@
 
 #include <format>
 
+#include "PaletteEditor.hpp"
+
 #include "../util/Logger.hpp"
 #include "../util/Input.hpp"
 
 void ColorPicker::Update(Rectangle size) {
 	
-	ColorIdx activeColor = 	TilesetData::GetActiveColorIdx();
+	ColorIdx activeColor = 	PaletteEditor::ActiveColorIdx();
 	Color pickedColor = TilesetData::GetColor(activeColor);
 	
 	if(Input::PrimaryInteractionPressed()) {

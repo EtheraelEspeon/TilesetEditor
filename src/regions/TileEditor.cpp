@@ -4,11 +4,21 @@
 #include <format>
 #include <cmath>
 
+#include "PaletteEditor.hpp"
+
 #include "../util/Logger.hpp"
 #include "../util/Input.hpp"
 
-TileEditor::TileEditor() {
-	SetTool(ToolType::Brush);
+TileEditor* TileEditor::instance = nullptr;
+void TileEditor::Initialize() {
+	if(instance != nullptr) delete instance;
+	instance = new TileEditor();
+
+	Inst()->SetTool(ToolType::Brush);
+}
+TileEditor* TileEditor::Inst() {
+	if(instance == nullptr) Logger::Error("TileEditor uninitialized");
+	return instance;
 }
 
 void TileEditor::Update(Rectangle size) {
@@ -29,11 +39,11 @@ void TileEditor::Update(Rectangle size) {
 
 			int colorIdx = (x + y % 2) % 2;
 
-			DrawRectangleRec(bounds, backgroundColors[colorIdx]);
+			DrawRectangleRec(bounds, BackgroundColors[colorIdx]);
 		}
 	}
 
-	Tile* activeTile = TilesetData::GetActiveTile();
+	Tile* activeTile = TilesetData::GetTile(activeTileIdx);
 
 	// If the mouse is outside the draw region and the user presses a mouse button, deactivate painting until they release it 
 	if(!CheckCollisionPointRec(GetMousePosition(), size) && (Input::PrimaryInteractionPressed() || Input::SecondaryInteractionPressed())) { // TODO: Make a wrapper for mouse position in Input
@@ -172,36 +182,36 @@ std::vector<TileEditor::TilePos> TileEditor::CircleAround(TilePos center, float 
 	return out;
 }
 
-TileEditor::Tool* TileEditor::tool = nullptr;
-TileEditor::ToolType TileEditor::currentTool = ToolType::Null;
 void TileEditor::SetTool(ToolType toolType) {
 
-	Tool* oldToolPtr = tool;
+	Tool* newTool = nullptr;
 
 	switch(toolType) {
 	case(ToolType::Brush):
-		tool = new Brush();
+		newTool = new Brush();
 		break;
 	case(ToolType::Line):
-		tool = new Line();
+		newTool = new Line();
 		break;
 	case(ToolType::Fill):
-		tool = new Fill();
+		newTool = new Fill();
 		break;
 	case(ToolType::Eyedropper):
-		tool = new Eyedropper();
+		newTool = new Eyedropper();
 		break;
 	default:
+		break;
+	}
+
+	if(newTool == nullptr) {
 		Logger::Warning(std::format("Tried to set invalid tool type {}", (int)toolType));
 		return;
 	}
 
-	// Returns early if things go wrong.
-	// If control flow reaches here, things went smoothly
-	currentTool = toolType;
-	if(oldToolPtr != nullptr) delete oldToolPtr;
+	if(Inst()->tool != nullptr) delete Inst()->tool;
+	Inst()->tool = newTool;
 }
-TileEditor::ToolType TileEditor::CurrentTool() { return currentTool; }
+TileEditor::ToolType TileEditor::CurrentTool() { return Inst()->currentTool; }
 
 TileEditor::TilePos::TilePos(Vector2 v) {
 	x = v.x;
@@ -246,7 +256,7 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 	bool mouseInRegion = CheckCollisionPointRec(mousePos, editorRegion);
 
 	auto mouseTilePositions = CircleAround(WindowPosToTilePos(mousePos, editorRegion), radius);
-	ColorIdx cursorColor = rightClick ? 0 : TilesetData::GetActiveColorIdx();
+	ColorIdx cursorColor = rightClick ? 0 : PaletteEditor::ActiveColorIdx();
 
 	// paint
 	if(userIsInteracting && mouseInRegion) {
@@ -307,7 +317,7 @@ void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 	bool rightClick = Input::SecondaryInteractionPressed();
 
 	TilePos mouseTilePos = WindowPosToTilePos(mousePos, editorRegion);
-	ColorIdx paintColorIdx = rightClick ? 0 : TilesetData::GetActiveColorIdx();
+	ColorIdx paintColorIdx = rightClick ? 0 : PaletteEditor::ActiveColorIdx();
 	Color paintColor = TilesetData::GetColor(paintColorIdx);
 
 	if(rightClick) state = NoPoints;
@@ -361,7 +371,7 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 	bool userIsInteracting = leftClick || rightClick;
 
 	TilePos mouseTilePos = WindowPosToTilePos(mousePos, editorRegion);
-	ColorIdx paintColor = rightClick ? 0 : TilesetData::GetActiveColorIdx();
+	ColorIdx paintColor = rightClick ? 0 : PaletteEditor::ActiveColorIdx();
 
 	// paint
 	if(userIsInteracting) {
@@ -421,7 +431,7 @@ void TileEditor::Eyedropper::Paint(Tile* activeTile, std::set<TilePos>* reserved
 		TilePos mousePos = WindowPosToTilePos(GetMousePosition(), editorRegion);
 		ColorIdx newColor = activeTile->GetPixel(mousePos.x, mousePos.y);
 		
-		if(newColor != 0) TilesetData::SetActiveColor(newColor);
+		if(newColor != 0) PaletteEditor::SetActiveColorIdx(newColor);
 	}
 	
 

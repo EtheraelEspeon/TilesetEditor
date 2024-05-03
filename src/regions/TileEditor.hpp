@@ -9,9 +9,9 @@
 
 class TileEditor {
 public:
-	const std::array<Color, 2> backgroundColors = {ColorFromHSV(0, 0, 0.4), ColorFromHSV(0, 0, 0.6)};
+	static constexpr std::array<Color, 2> BackgroundColors = {(Color){102, 102, 102, 255}, (Color){153, 153, 153, 255}};
 
-	TileEditor();
+	static void Initialize();
 
 	void Update(Rectangle size);
 
@@ -24,9 +24,11 @@ public:
 	};
 	static void SetTool(ToolType tool);
 	static ToolType CurrentTool();
+
+	static TileEditor* Inst();
 private:
 
-	bool pressBeganOutsideEditorRegion = false;
+	/* ---- Utils ---- */
 
 	struct TilePos {
 		TilePos(Vector2 v);
@@ -47,8 +49,12 @@ private:
 	static TilePos WindowPosToTilePos(Vector2 windowPos, Rectangle editorRegion);
 	static Rectangle GetPixelBounds(TilePos tilePosition, Rectangle editorRegion);
 
+	/* ---- Draw Shapes ----*/
+
 	static std::vector<TilePos> LineBetween(TilePos to, TilePos from);
 	static std::vector<TilePos> CircleAround(TilePos center, float radius);
+
+	/* ---- Tools ---- */
 
 	struct Tool {
 		/// @brief Paints onto the active tile, draws to the screen, and polls user input.
@@ -57,9 +63,6 @@ private:
 		/// @return a vector of tiles to paint with the active color
 		virtual void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) = 0;
 	};
-
-	static Tool* tool; // Should never be null. Is initialized on object creation
-	static ToolType currentTool; // as above
 
 	struct Brush : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) override;
@@ -85,4 +88,14 @@ private:
 	struct Eyedropper : public Tool {
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) override;
 	};
+
+	/* ---- State ---- */
+
+	static TileEditor* instance;
+
+	bool pressBeganOutsideEditorRegion = false;
+	int activeTileIdx = 0;
+
+	Tool* tool = nullptr; // Should never be null. Is initialized on object creation
+	ToolType currentTool = ToolType::Null; // as above
 };
