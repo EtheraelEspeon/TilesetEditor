@@ -68,7 +68,7 @@ private:
 		void Paint(Tile* activeTile, std::set<TilePos>* reservedPixels, Rectangle editorRegion) override;
 	private:
 		bool painting = false;
-		std::vector<ChangeQueue::PaintData> paintLocations;
+		std::vector<TilesetData::PaintData> paintLocations;
 		std::set<uint8_t> tileIndicesToBePainted;
 		float radius = 0;
 	};

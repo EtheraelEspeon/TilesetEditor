@@ -76,8 +76,8 @@ int main() {
 		
 		*/
 
-		if(Input::KeybindIsPressed("Undo")) ChangeQueue::UndoLatestChange();
-		if(Input::KeybindIsPressed("Redo")) ChangeQueue::RedoLatestChange();
+		if(Input::KeybindIsPressed("Undo")) TilesetData::UndoLatestChange();
+		if(Input::KeybindIsPressed("Redo")) TilesetData::RedoLatestChange();
 
 		EndDrawing();
 	}

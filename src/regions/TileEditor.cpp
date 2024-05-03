@@ -271,7 +271,7 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 			auto linePositions = LineBetween(mouseTilePositions[i], prevMouseTilePositions[i]);
 			for(auto p : linePositions) {
 			
-			auto newPaintData = ChangeQueue::PaintData(p.x, p.y, cursorColor);
+			auto newPaintData = TilesetData::PaintData(p.x, p.y, cursorColor);
 
 			if(tileIndicesToBePainted.contains(newPaintData.pixelIdx)) continue;
 
@@ -284,9 +284,9 @@ void TileEditor::Brush::Paint(Tile* activeTile, std::set<TilePos>* reservedPixel
 		painting = false;
 
 		if(!paintLocations.empty()) {
-			ChangeQueue::ApplyChange(
-				ChangeQueue::PaintPixelsAction(paintLocations),
-				ChangeQueue::UnpaintPixelsAction(paintLocations, activeTile),
+			TilesetData::ApplyChange(
+				TilesetData::PaintPixelsAction(paintLocations),
+				TilesetData::UnpaintPixelsAction(paintLocations, activeTile),
 				activeTile
 			);
 		}
@@ -343,16 +343,16 @@ void TileEditor::Line::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		// progress state
 		if(leftClick) {
 			
-			std::vector<ChangeQueue::PaintData> toPaint = {};
+			std::vector<TilesetData::PaintData> toPaint = {};
 
 			for (auto t : linePoints) {
-				toPaint.push_back(ChangeQueue::PaintData(t.x, t.y, paintColorIdx));
+				toPaint.push_back(TilesetData::PaintData(t.x, t.y, paintColorIdx));
 			}
 			state = NoPoints;
 
-			ChangeQueue::ApplyChange(
-				ChangeQueue::PaintPixelsAction(toPaint),
-				ChangeQueue::UnpaintPixelsAction(toPaint, activeTile),
+			TilesetData::ApplyChange(
+				TilesetData::PaintPixelsAction(toPaint),
+				TilesetData::UnpaintPixelsAction(toPaint, activeTile),
 				activeTile
 			);
 		}
@@ -385,14 +385,14 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		if(Input::KeybindIsHeld("SwapFillMode")) fillDirections = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 		else fillDirections = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
 
-		std::vector<ChangeQueue::PaintData> toPaint = {};
+		std::vector<TilesetData::PaintData> toPaint = {};
 
 		while(!toCheck->empty()) {
 			for(auto p : *toCheck) {
 				checkedTiles.insert(p);
 
 				if(activeTile->GetPixel(p.x, p.y) != colorToMatch) continue;
-				toPaint.push_back(ChangeQueue::PaintData(p.x, p.y, paintColor));
+				toPaint.push_back(TilesetData::PaintData(p.x, p.y, paintColor));
 
 				for(auto d : fillDirections) {
 					auto newPosToCheck = p + d;
@@ -410,9 +410,9 @@ void TileEditor::Fill::Paint(Tile* activeTile, std::set<TilePos>* reservedPixels
 		delete toCheck;
 		delete toCheckNext;
 
-		ChangeQueue::ApplyChange(
-			ChangeQueue::PaintPixelsAction(toPaint),
-			ChangeQueue::UnpaintPixelsAction(toPaint, activeTile),
+		TilesetData::ApplyChange(
+			TilesetData::PaintPixelsAction(toPaint),
+			TilesetData::UnpaintPixelsAction(toPaint, activeTile),
 			activeTile
 		);
 	}

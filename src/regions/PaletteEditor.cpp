@@ -114,7 +114,12 @@ void PaletteEditor::Update(Rectangle size){
 			multiplier *= 16;
 		}
 
-		TilesetData::SetColor(activeColor, GetColor(colorInt));
+		TilesetData::ApplyChange(
+			[idx=activeColor, c=GetColor(colorInt)](Tile* unused){ TilesetData::SetColor(idx, c); },
+			[idx=activeColor, c=TilesetData::GetColor(activeColor)](Tile* unused){ TilesetData::SetColor(idx, c); },
+			nullptr
+		);
+
 		Logger::Debug("Pasted " + colorHexCode + " (" + std::format("{0:8x}", colorInt) + ")");
 	}
 }

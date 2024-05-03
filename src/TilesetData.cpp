@@ -4,6 +4,8 @@
 
 #include "util/Logger.hpp"
 
+/* ---- Tile ---- */
+
 Tile::Tile() {
 	colorData.fill(0);
 }
@@ -18,94 +20,7 @@ void Tile::SetPixel(uint8_t rawIdx, ColorIdx color) {
 }
 ColorIdx Tile::GetPixel(int x, int y) { return colorData[y * 16 + x]; }
 
-ChangeQueue::PaintData::PaintData(int x, int y, ColorIdx color) {
-	pixelIdx = 16 * y + x;
-	this->color = color;
-}
-
-ChangeQueue::UndoAction ChangeQueue::UnpaintPixelsAction(std::vector<PaintData> paintData, Tile* activeTile) {
-	for(auto& p : paintData) {
-		p.color = activeTile->colorData[p.pixelIdx];
-	}
-
-	return [paintData=paintData](Tile* tile){
-		for(int i = paintData.size() - 1; i >= 0; i--) {
-			tile->SetPixel(paintData[i].pixelIdx, paintData[i].color);
-		}
-	};
-}
-ChangeQueue::RedoAction ChangeQueue::PaintPixelsAction(std::vector<PaintData> paintData) {
-	return [paintData=paintData](Tile* tile){
-		for(int i = 0; i < paintData.size(); i++) {
-			tile->SetPixel(paintData[i].pixelIdx, paintData[i].color);
-		}
-	};
-}
-
-ChangeQueue::Change::~Change() {
-	if(next != nullptr) delete next;
-	//Logger::Debug("Deleted change");
-}
-void ChangeQueue::ApplyChange(RedoAction redo, UndoAction undo, Tile* activeTile) {
-	if(firstChangeIsUndone == true) {
-		delete latestChange;
-		latestChange = nullptr;
-		firstChangeIsUndone = false;
-	}
-	
-	if(latestChange == nullptr) {
-		latestChange = new Change();
-		//Logger::Debug("Initialized change history tree");
-	}
-	else {
-		if(latestChange->next != nullptr) delete latestChange->next; 
-		latestChange->next = new Change();
-		latestChange->next->prev = latestChange;
-		latestChange = latestChange->next;
-		//Logger::Debug("Appended new change to history tree");
-	}
-
-	latestChange->redo = redo;
-	latestChange->undo = undo;
-	latestChange->targetTile = activeTile;
-	
-	latestChange->redo(latestChange->targetTile);
-};
-void ChangeQueue::UndoLatestChange() {
-
-	if(latestChange == nullptr || firstChangeIsUndone) {
-		//Logger::Debug("Attempted to undo while at the beginning of history");
-		return;
-	}
-
-	if(TilesetData::TileIsDeleted(latestChange->targetTile)) {
-		//Logger::Debug("Attempted to undo an action on a deleted tile, recurring");
-		latestChange = latestChange->prev;
-		UndoLatestChange(); // This might overflow the stack? Seems unlikely.
-	}
-	else {
-		latestChange->undo(latestChange->targetTile);
-		if(latestChange->prev == nullptr) firstChangeIsUndone = true;
-		else latestChange = latestChange->prev;
-	}
-}
-void ChangeQueue::RedoLatestChange() {
-
-	if(latestChange == nullptr || (latestChange->next == nullptr && !firstChangeIsUndone)) {
-		//Logger::Debug("Attempted to redo when end of history");
-		return;
-	}
-	
-	if(!firstChangeIsUndone) latestChange = latestChange->next;
-	else firstChangeIsUndone = false;
-
-	if(TilesetData::TileIsDeleted(latestChange->targetTile)) {
-		//Logger::Debug("Attempted to redo an action on a deleted tile, recurring");
-		latestChange = latestChange->next;
-		RedoLatestChange(); // This might overflow the stack? Seems unlikely.
-	}
-	else latestChange->redo(latestChange->targetTile);
-}
+/* ---- Singleton Stuff ---- */
 
 TilesetData* TilesetData::inst = nullptr;
 void TilesetData::Initialize() {
@@ -120,13 +35,23 @@ void TilesetData::Initialize() {
 
 	Logger::Message("Initialized new tileset!");	
 }
-
-void TilesetData::DeleteTile(int tileIdx) {
-	auto itr = ItrFromTileIdx(tileIdx);
-	
-	Inst()->deletedTileLocations.insert(&(*itr));
-	Inst()->tiles.erase(itr);
+TilesetData* TilesetData::Inst() {
+	if(!inst) Logger::Error("TilesetData unintialized");
+	return inst;
 }
+TilesetData::~TilesetData() {
+	delete rootState;
+
+	for(auto t : tiles) {
+		delete t;
+	}
+	for(auto t : deletedTiles) {
+		delete t;
+	}
+}
+
+/* ---- Tile Management ---- */
+
 Tile* TilesetData::GetTile(int tileIdx) {
 	return *ItrFromTileIdx(tileIdx);
 }
@@ -136,6 +61,12 @@ int TilesetData::NumTiles() {
 void TilesetData::AddTile() {
 	Inst()->tiles.push_back(new Tile());
 }
+
+bool TilesetData::TileIsDeleted(Tile* tileLocation) {
+	return Inst()->deletedTiles.contains(tileLocation);
+}
+
+/* ---- Palette Management ---- */
 
 void TilesetData::SetColor(ColorIdx colorIdx, Color color) {
 	if(colorIdx == 0) {
@@ -150,17 +81,97 @@ Color TilesetData::GetColor(ColorIdx colorIdx) {
 	return Inst()->palette[colorIdx - 1];
 }
 
-bool TilesetData::TileIsDeleted(void* tileLocation) {
-	return Inst()->deletedTileLocations.contains(tileLocation);
-}
-
-TilesetData* TilesetData::Inst() {
-	if(!inst) Logger::Error("TilesetData unintialized");
-	return inst;
-}
-
+/* ---- Utility ---- */
 std::list<Tile*>::iterator TilesetData::ItrFromTileIdx(int tileIdx) {
 	auto itr = inst->tiles.begin();
 	std::advance(itr, tileIdx);
 	return itr;
 }
+
+/* ---- Undo/Redo Support ---- */
+
+TilesetData::Action TilesetData::UnpaintPixelsAction(std::vector<PaintData> paintData, Tile* activeTile) {
+	for(auto& p : paintData) {
+		p.color = activeTile->colorData[p.pixelIdx];
+	}
+
+	return [paintData=paintData](Tile* tile){
+		for(int i = paintData.size() - 1; i >= 0; i--) {
+			tile->SetPixel(paintData[i].pixelIdx, paintData[i].color);
+		}
+	};
+}
+TilesetData::Action TilesetData::PaintPixelsAction(std::vector<PaintData> paintData) {
+	return [paintData=paintData](Tile* tile){
+		for(int i = 0; i < paintData.size(); i++) {
+			tile->SetPixel(paintData[i].pixelIdx, paintData[i].color);
+		}
+	};
+}
+
+TilesetData::PaintData::PaintData(int x, int y, ColorIdx color) {
+	pixelIdx = 16 * y + x;
+	this->color = color;
+}
+
+TilesetData::State::~State() {
+	if(prev != nullptr) {
+		delete reverse;
+	}
+	if(next != nullptr) {
+		delete forward;
+		delete next;
+	}
+	//Logger::Debug("Deleted state node");
+}
+
+TilesetData::State::Change::Change(Action traverse, Tile* targetTile) {
+	this->traverse = traverse;
+	this->targetTile = targetTile;
+}
+void TilesetData::State::Change::Apply() {
+	if(TileIsDeleted(targetTile)) {
+		Logger::Warning("No mechanism for undeleting tiles");
+	}
+	
+	traverse(targetTile);
+}
+
+void TilesetData::ApplyChange(Action redo, Action undo, Tile* targetTile) {
+	auto inst = Inst();
+	
+	auto nextState = new State();
+	nextState->reverse = new State::Change(undo, targetTile);
+	nextState->prev = inst->currentState;
+
+	if(inst->currentState->next != nullptr) {
+		//Logger::Debug("Deleting undone changes");
+		delete inst->currentState->next;
+	} 
+
+	inst->currentState->forward = new State::Change(redo, targetTile);
+	inst->currentState->next = nextState;
+
+	inst->currentState->forward->Apply();
+	inst->currentState = nextState;
+}
+
+void TilesetData::UndoLatestChange() {
+	if(inst->currentState->prev == nullptr) {
+		//Logger::Debug("Tried to undo at root of tree");
+		return;
+	}
+
+	inst->currentState->reverse->Apply();
+	inst->currentState = inst->currentState->prev;
+}
+void TilesetData::RedoLatestChange() {
+	if(inst->currentState->next == nullptr) {
+		//Logger::Debug("Tried to redo at end of tree");
+		return;
+	}
+
+	inst->currentState->forward->Apply();
+	inst->currentState = inst->currentState->next;
+}
+
