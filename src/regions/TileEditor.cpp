@@ -210,6 +210,7 @@ void TileEditor::SetTool(ToolType toolType) {
 
 	if(Inst()->tool != nullptr) delete Inst()->tool;
 	Inst()->tool = newTool;
+	Inst()->currentTool = toolType;
 }
 TileEditor::ToolType TileEditor::CurrentTool() { return Inst()->currentTool; }
 
