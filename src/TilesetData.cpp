@@ -4,6 +4,8 @@
 
 #include "util/Logger.hpp"
 
+#include "regions/TileSelector.hpp" // Specifically included for TilesetData::State::Change::Apply()
+
 /* ---- Tile ---- */
 
 Tile::Tile() {
@@ -18,7 +20,7 @@ void Tile::SetPixel(uint8_t rawIdx, ColorIdx color) {
 	colorData[rawIdx] = color;
 	//Logger::Debug(std::format("[{}] -> {}", rawIdx, color));
 }
-ColorIdx Tile::GetPixel(int x, int y) { return colorData[y * 16 + x]; }
+ColorIdx Tile::GetPixel(int x, int y) const { return colorData[y * 16 + x]; }
 
 /* ---- Singleton Stuff ---- */
 
@@ -135,6 +137,7 @@ void TilesetData::State::Change::Apply() {
 	}
 	
 	traverse(targetTile);
+	TileSelector::InvalidateTextureOf(targetTile);
 }
 
 void TilesetData::ApplyChange(Action redo, Action undo, Tile* targetTile) {

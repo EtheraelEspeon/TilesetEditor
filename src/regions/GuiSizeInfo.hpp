@@ -7,6 +7,7 @@
 
 struct GuiSizeInfo {
 
+	/* ---- Size Info ---- */
 	constexpr static float PercentLeftRegionWidth = 6.0/32.0; // Percent of the screen's width occupied by the left region
 	constexpr static float PercentRightRegionWidth = 8.0/32.0; // as above for the right region
 	constexpr static int TargetNumberOfDisplayedTiles = 8;
@@ -16,6 +17,9 @@ struct GuiSizeInfo {
 	constexpr static int LeftRegionPadding = 16;
 	constexpr static int CenterRegionPadding = 4;
 	constexpr static int RightRegionPadding = 16;
+
+	/* ---- Style Info ---- */
+	constexpr static int SelectedBorderThickness = 6;
 
 	GuiSizeInfo(int windowWidth, int windowHeight);
 

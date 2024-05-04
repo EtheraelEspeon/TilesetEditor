@@ -3,6 +3,9 @@
 #include <string>
 #include <format>
 
+#include "GuiSizeInfo.hpp"
+#include "TileSelector.hpp"
+
 #include "../TilesetData.hpp"
 
 #include "../util/Logger.hpp"
@@ -20,7 +23,7 @@ PaletteEditor* PaletteEditor::Inst() {
 
 void PaletteEditor::Update(Rectangle size){
 
-	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_WIDTH, 6);
+	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_WIDTH, GuiSizeInfo::SelectedBorderThickness);
 
 	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_NORMAL, 0x00000000); // make button bodies transparent
 	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_COLOR_NORMAL, 0x00000040); // make borders partially transparent when unselected
@@ -117,7 +120,7 @@ void PaletteEditor::Update(Rectangle size){
 		TilesetData::ApplyChange(
 			[idx=activeColor, c=GetColor(colorInt)](Tile* unused){ TilesetData::SetColor(idx, c); },
 			[idx=activeColor, c=TilesetData::GetColor(activeColor)](Tile* unused){ TilesetData::SetColor(idx, c); },
-			nullptr
+			TileSelector::ActiveTile()
 		);
 
 		Logger::Debug("Pasted " + colorHexCode + " (" + std::format("{0:8x}", colorInt) + ")");

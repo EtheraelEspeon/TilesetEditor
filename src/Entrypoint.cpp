@@ -36,7 +36,7 @@ int main() {
 
 	PaletteEditor::Initialize();
 	ColorPicker colorPicker;
-	TileSelector tileSelector;
+	TileSelector::Initialize();
 	ToolBar toolBar;
 	TileEditor::Initialize();
 
@@ -59,7 +59,7 @@ int main() {
 
 		PaletteEditor::Inst()->Update(info.PaletteEditor());
 		colorPicker.Update(info.ColorPicker());
-		tileSelector.Update(info.TileSelector());
+		TileSelector::Inst()->Update(info.TileSelector());
 		toolBar.Update(info.ToolBar());
 		TileEditor::Inst()->Update(info.TileEditor());
 

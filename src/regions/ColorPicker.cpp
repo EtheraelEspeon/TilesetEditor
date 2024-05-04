@@ -3,6 +3,7 @@
 #include <format>
 
 #include "PaletteEditor.hpp"
+#include "TileSelector.hpp"
 
 #include "../util/Logger.hpp"
 #include "../util/Input.hpp"
@@ -34,7 +35,7 @@ void ColorPicker::Update(Rectangle size) {
 			TilesetData::ApplyChange(
 				[idx=colorIdxOnPress, color=pickedColor ](Tile* unused){ TilesetData::SetColor(idx, color); },
 				[idx=colorIdxOnPress, color=colorOnPress](Tile* unused){ TilesetData::SetColor(idx, color); },
-				nullptr
+				TileSelector::ActiveTile()
 			);
 		}
 	}

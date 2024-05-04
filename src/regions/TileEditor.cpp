@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "PaletteEditor.hpp"
+#include "TileSelector.hpp"
 
 #include "../util/Logger.hpp"
 #include "../util/Input.hpp"
@@ -43,7 +44,7 @@ void TileEditor::Update(Rectangle size) {
 		}
 	}
 
-	Tile* activeTile = TilesetData::GetTile(activeTileIdx);
+	Tile* activeTile = TileSelector::ActiveTile();
 
 	// If the mouse is outside the draw region and the user presses a mouse button, deactivate painting until they release it 
 	if(!CheckCollisionPointRec(GetMousePosition(), size) && (Input::PrimaryInteractionPressed() || Input::SecondaryInteractionPressed())) { // TODO: Make a wrapper for mouse position in Input

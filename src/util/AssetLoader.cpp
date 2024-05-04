@@ -18,7 +18,12 @@ Texture2D AssetLoader::LoadRaylibTexture(std::string path) {
 	return TryLoadFile<Texture2D>(
 		path,
 		[](std::string path) { return LoadTexture(path.c_str()); },
-		[](std::string path) { return LoadTextureFromImage(GenImageColor(16, 16, {255, 0, 255, 255})); }
+		[](std::string path) {
+			auto img = GenImageColor(16, 16, {255, 0, 255, 255});
+			auto tex = LoadTextureFromImage(img);
+			UnloadImage(img);
+			return tex;
+		}
 	);
 }
 std::vector<std::string> AssetLoader::LoadTextByLine(std::string path) {

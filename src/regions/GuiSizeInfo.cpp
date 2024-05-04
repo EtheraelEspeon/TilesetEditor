@@ -44,7 +44,7 @@ GuiSizeInfo::GuiSizeInfo(int windowWidth, int windowHeight) {
 	tileSelector.y = RightRegionPadding;
 	tileSelector.width = rightRegion.width - 2 * RightRegionPadding;
 	tileSelector.height = rightRegion.height - 2 * RightRegionPadding;
-	tileSelector.width = (int)(tileSelector.width / 16) * 16;
+	tileSelector.width = (int)(tileSelector.width / 32) * 32;
 
 	/* --- set Menu Bar size --- */
 	menuBar.width = centerRegion.width;

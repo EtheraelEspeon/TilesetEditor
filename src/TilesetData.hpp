@@ -13,11 +13,11 @@ typedef uint8_t ColorIdx;
 
 class TilesetData;
 struct Tile {
-	Tile();
-
-	ColorIdx GetPixel(int x, int y);
+	
+	ColorIdx GetPixel(int x, int y) const;
 
 private:
+	Tile();
 
 	void SetPixel(int x, int y, ColorIdx color);
 	void SetPixel(uint8_t rawIdx, ColorIdx color);
