@@ -94,7 +94,6 @@ private:
 	static TileEditor* instance;
 
 	bool pressBeganOutsideEditorRegion = false;
-	int activeTileIdx = 0;
 
 	Tool* tool = nullptr; // Should never be null. Is initialized on object creation
 	ToolType currentTool = ToolType::Null; // as above
