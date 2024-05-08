@@ -61,9 +61,11 @@ void PaletteEditor::Update(Rectangle size){
 
 			std::string idxStr = std::to_string(buttonIdx);
 			
+			bool pressed = GuiButton(bounds, idxStr.c_str()) || Input::KeybindIsPressed("Color" + idxStr);
+
 			// make the selected color's button disabled to highlight its border
 			if(buttonIdx == activeColor) GuiDisable();
-			if(GuiButton(bounds, idxStr.c_str())) activeColor = buttonIdx;
+			if(pressed) activeColor = buttonIdx;
 			if(buttonIdx == activeColor) GuiEnable();
 			
 			buttonIdx++;
