@@ -45,6 +45,8 @@ private:
 
 		static Key StringToKey(std::string id);
 		static KeyboardKey StringToKeycode(std::string id);
+
+		static const std::map<std::string, KeyboardKey> Keycodes;
 	};
 
 	static Input* instance;

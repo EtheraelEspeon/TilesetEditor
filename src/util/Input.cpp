@@ -211,47 +211,83 @@ Input::Key Input::ConfigParser::StringToKey(std::string id) {
 KeyboardKey Input::ConfigParser::StringToKeycode(std::string id) {
 	id = TextToLower(id.c_str());
 
-	if(id == "1") return KEY_ONE;
-	if(id == "2") return KEY_TWO;
-	if(id == "3") return KEY_THREE;
-	if(id == "4") return KEY_FOUR;
-	if(id == "5") return KEY_FIVE;
-	if(id == "6") return KEY_SIX;
-	if(id == "7") return KEY_SEVEN;
-	if(id == "8") return KEY_EIGHT;
-	if(id == "9") return KEY_NINE;
-	if(id == "0") return KEY_ZERO;
-
-	if(id == "a") return KEY_A;
-	if(id == "b") return KEY_B;
-	if(id == "c") return KEY_C;
-	if(id == "d") return KEY_D;
-	if(id == "e") return KEY_E;
-	if(id == "f") return KEY_F;
-	if(id == "g") return KEY_G;
-	if(id == "h") return KEY_H;
-	if(id == "i") return KEY_I;
-	if(id == "j") return KEY_J;
-	if(id == "k") return KEY_K;
-	if(id == "l") return KEY_L;
-	if(id == "m") return KEY_M;
-	if(id == "n") return KEY_N;
-	if(id == "o") return KEY_O;
-	if(id == "p") return KEY_P;
-	if(id == "q") return KEY_Q;
-	if(id == "r") return KEY_R;
-	if(id == "s") return KEY_S;
-	if(id == "t") return KEY_T;
-	if(id == "u") return KEY_U;
-	if(id == "v") return KEY_V;
-	if(id == "w") return KEY_W;
-	if(id == "x") return KEY_X;
-	if(id == "y") return KEY_Y;
-	if(id == "z") return KEY_Z;
-
-	if(id == "ctrl")  return KEY_LEFT_CONTROL;
-	if(id == "alt")   return KEY_LEFT_ALT;
-	if(id == "shift") return KEY_LEFT_SHIFT;
+	auto itr = Keycodes.find(id);
+	if(itr != Keycodes.end()) return itr->second;
 
 	return KEY_NULL;
 }
+const std::map<std::string, KeyboardKey> Input::ConfigParser::Keycodes = {
+	{ "f1" , KEY_F1  },
+	{ "f2" , KEY_F2  },
+	{ "f3" , KEY_F3  },
+	{ "f4" , KEY_F4  },
+	{ "f5" , KEY_F5  },
+	{ "f6" , KEY_F6  },
+	{ "f7" , KEY_F7  },
+	{ "f8" , KEY_F8  },
+	{ "f9" , KEY_F9  },
+	{ "f10", KEY_F10 },
+	{ "f11", KEY_F11 },
+	{ "f12", KEY_F12 },
+
+	{ "numpad1", KEY_KP_1},
+	{ "numpad2", KEY_KP_2},
+	{ "numpad3", KEY_KP_3},
+	{ "numpad4", KEY_KP_4},
+	{ "numpad5", KEY_KP_5},
+	{ "numpad6", KEY_KP_6},
+	{ "numpad7", KEY_KP_7},
+	{ "numpad8", KEY_KP_8},
+	{ "numpad9", KEY_KP_9},
+	{ "numpad0", KEY_KP_0},
+	
+	{ "numlock", KEY_NUM_LOCK },
+	{ "numpadplus", KEY_KP_ADD },
+	{ "numpadminus", KEY_KP_SUBTRACT },
+	{ "numpadmultiply", KEY_KP_MULTIPLY},
+	{ "numpadslash", KEY_KP_DIVIDE },
+	{ "numpaddot", KEY_KP_DECIMAL },
+	{ "numpadenter", KEY_KP_ENTER },
+
+	{ "1", KEY_ONE   },
+	{ "2", KEY_TWO   },
+	{ "3", KEY_THREE },
+	{ "4", KEY_FOUR  },
+	{ "5", KEY_FIVE  },
+	{ "6", KEY_SIX   },
+	{ "7", KEY_SEVEN },
+	{ "8", KEY_EIGHT },
+	{ "9", KEY_NINE  },
+	{ "0", KEY_ZERO  },
+
+	{ "a", KEY_A },
+	{ "b", KEY_B },
+	{ "c", KEY_C },
+	{ "d", KEY_D },
+	{ "e", KEY_E },
+	{ "f", KEY_F },
+	{ "g", KEY_G },
+	{ "h", KEY_H },
+	{ "i", KEY_I },
+	{ "j", KEY_J },
+	{ "k", KEY_K },
+	{ "l", KEY_L },
+	{ "m", KEY_M },
+	{ "n", KEY_N },
+	{ "o", KEY_O },
+	{ "p", KEY_P },
+	{ "q", KEY_Q },
+	{ "r", KEY_R },
+	{ "s", KEY_S },
+	{ "t", KEY_T },
+	{ "u", KEY_U },
+	{ "v", KEY_V },
+	{ "w", KEY_W },
+	{ "x", KEY_X },
+	{ "y", KEY_Y },
+	{ "z", KEY_Z },
+
+	{ "ctrl", KEY_LEFT_CONTROL },
+	{ "alt" , KEY_LEFT_ALT },
+	{ "shift", KEY_LEFT_SHIFT }
+};
