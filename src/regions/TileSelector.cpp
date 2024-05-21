@@ -4,9 +4,11 @@
 
 #include "GuiSizeInfo.hpp"
 #include "TileEditor.hpp"
+#include "Background.hpp"
 
 #include "../util/Input.hpp"
 #include "../util/Logger.hpp"
+#include "../util/AssetLoader.hpp"
 
 #include "../TilesetData.hpp"
 
@@ -17,13 +19,15 @@ void TileSelector::Initialize() {
 	if(instance != nullptr) delete instance;
 	instance = new TileSelector();
 
-	while(TilesetData::NumTiles() < 10) TilesetData::AddTile(); // TODO: Delete
+	instance->addTileTex = AssetLoader::LoadRaylibTexture("res/tile_selector/add_tile.png");
 
 	int numTiles = TilesetData::NumTiles();
 	for(int i = 0; i < numTiles; i++) {
-		auto tile = TilesetData::GetTile(i);
+		auto tile = *TilesetData::TilesBegin();
 		Inst()->tileTextures.insert({tile, TileToTexture(tile)});
 	}
+
+	Inst()->activeTileItr = TilesetData::TilesBegin();
 }
 TileSelector* TileSelector::Inst() {
 	if(instance == nullptr) Logger::Error("TileSelector uninitialized");
@@ -31,15 +35,56 @@ TileSelector* TileSelector::Inst() {
 }
 
 Tile* TileSelector::ActiveTile() {
-	return TilesetData::GetTile(Inst()->activeTileIdx);
-}
-int TileSelector::ActiveTileIdx() {
-	return Inst()->activeTileIdx;
+	return *Inst()->activeTileItr;
 }
 
 /* ---- General ---- */
 
 void TileSelector::Update(Rectangle size) {
+
+	if(Input::KeybindIsPressed("DeleteSelectedTile") && TilesetData::NumTiles() > 1) {
+		// Update active tile:
+		auto itr = activeTileItr;
+		itr++;
+		auto rItr = std::make_reverse_iterator(itr);
+		itr--;
+
+		int offset = 0;
+		
+		bool foundUndeletedTile = true;
+
+		rItr++;
+		while(rItr != TilesetData::TilesREnd()) {
+			offset--;
+			if(!(*rItr)->deleted) {
+				goto found;
+			}
+			rItr++;
+		}
+
+		offset = 0;
+		itr++;
+		while(itr != TilesetData::TilesEnd()) {
+			offset++;
+			if(!(*itr)->deleted) {
+				goto found;
+			}
+			itr++;
+		}
+
+		foundUndeletedTile = false;
+		found:;
+
+		if(foundUndeletedTile) {
+			TilesetData::ApplyChange(
+				[](Tile* tile){tile->deleted = true;},
+				[](Tile* tile){tile->deleted = false; },
+				*activeTileItr
+			);
+
+			std::advance(activeTileItr, offset);
+		}
+	}
 
 	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_WIDTH, GuiSizeInfo::SelectedBorderThickness);
 
@@ -67,42 +112,77 @@ void TileSelector::Update(Rectangle size) {
 
 	UpdateScroll(size, unitHeight);
 
-	int numTiles = TilesetData::NumTiles();
-	for(int i = 0; i < numTiles; i++) {
+	auto tileItr = TilesetData::TilesBegin();
+	int drawnTiles = 0;
+	while(tileItr != TilesetData::TilesEnd()) {
+
+		if((*tileItr)->deleted) {
+			tileItr++;
+			continue;
+		}
+
 		Rectangle previewPos;
-		previewPos.y = size.y + unitHeight * ((float)i - viewportPos);
+		previewPos.y = size.y + unitHeight * ((float)drawnTiles - viewportPos);
 		previewPos.x = size.x;
 		previewPos.width = previewSize;
 		previewPos.height = previewSize;
+		drawnTiles++;
+
+		if(!CheckCollisionRecs(previewPos, size)) { 
+			tileItr++;
+			continue;
+		}
 
 		Texture tex;
-		Tile* tile = TilesetData::GetTile(i);
+		// Initialize tex
+		Tile* tile = *tileItr; // Try to get the tile
 		auto itr = tileTextures.find(tile);
-		if(itr == tileTextures.end()) {
-			// Try to generate the image
-			if(tile != nullptr) {
+		if(itr != tileTextures.end()) { // if the tile has a texture already, just get it
+			tex = itr->second;
+		}
+		else { // if the tile doesn't have an associated texture
+			if(tile != nullptr) { // Generate a texture for it
 				tex = TileToTexture(tile);
 				tileTextures.insert({tile, tex});
 			}
-			else {
-				auto img = GenImageColor(32, 32, {255, 0, 255, 255});
+			else { // If the tile doesn't exist
+				auto img = GenImageColor(32, 32, {255, 0, 255, 255}); // create a magenta error texture
 				tex = LoadTextureFromImage(img);
 				UnloadImage(img);
 			}
 		}
-		else {
-			tex = itr->second;
-		}
 
 		DrawTexturePro(tex, {0, 0, 32, 32}, previewPos, {0, 0}, 0, {255, 255, 255, 255});
 
-		if(activeTileIdx == i) GuiDisable();
+		if(activeTileItr == tileItr) GuiDisable();
 		bool pressed = GuiButton(previewPos, "");
-		if(activeTileIdx == i) GuiEnable();
+		if(activeTileItr == tileItr) GuiEnable();
 	
 		if(pressed) {
-			activeTileIdx = i;
+			activeTileItr = tileItr;
 		}
+
+		tileItr++;
+	}
+
+	// Draw the add tile button
+	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BORDER_WIDTH, 0);
+
+	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_NORMAL, 0x00000000); // make button bodies transparent
+	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_FOCUSED, 0x00000040); // make the button body darken when focused
+	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_PRESSED, 0x00000080); // make buttons get darker when pressed
+	GuiSetStyle(GuiControl::BUTTON, GuiControlProperty::BASE_COLOR_DISABLED, 0x00000040); // make the button body transparent when the color is selected
+
+	Rectangle buttonPos;
+	buttonPos.y = size.y + unitHeight * (TilesetData::NumTiles() - viewportPos);
+	buttonPos.x = size.x;
+	buttonPos.width = previewSize;
+	buttonPos.height = previewSize;
+
+	if(CheckCollisionRecs(buttonPos, size)) {
+		DrawRectangleRec(buttonPos, Background::rightBody);
+		if(GuiButton(buttonPos, "")) TilesetData::AddTile();
+		DrawTexturePro(addTileTex, {0, 0, (float)addTileTex.width, (float)addTileTex.height}, buttonPos, {0, 0}, 0, {255, 255, 255, 255});
 	}
 }
 void TileSelector::InvalidateTextureOf(Tile* id) {

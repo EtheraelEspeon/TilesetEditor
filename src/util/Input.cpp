@@ -216,6 +216,8 @@ KeyboardKey Input::ConfigParser::StringToKeycode(std::string id) {
 
 	return KEY_NULL;
 }
+
+// Keys have to be lowercase, TextToLower is called on the key names given in input.cfg
 const std::map<std::string, KeyboardKey> Input::ConfigParser::Keycodes = {
 	{ "f1" , KEY_F1  },
 	{ "f2" , KEY_F2  },
@@ -289,5 +291,7 @@ const std::map<std::string, KeyboardKey> Input::ConfigParser::Keycodes = {
 
 	{ "ctrl", KEY_LEFT_CONTROL },
 	{ "alt" , KEY_LEFT_ALT },
-	{ "shift", KEY_LEFT_SHIFT }
+	{ "shift", KEY_LEFT_SHIFT },
+
+	{ "delete", KEY_DELETE }
 };

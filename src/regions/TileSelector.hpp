@@ -15,7 +15,6 @@ public:
 	static TileSelector* Inst();
 
 	static Tile* ActiveTile();
-	static int ActiveTileIdx();
 
 	void Update(Rectangle size);
 
@@ -25,11 +24,13 @@ private:
 
 	/* ---- State ---- */
 
+	Texture2D addTileTex;
+
 	float scrollTarget = 0;
 	float targetViewportPos = 0; // starts at 0, scrolling down increases the value, making the list entries move up
 	float viewportPos = 0;
 
-	int activeTileIdx = 0;
+	std::list<Tile*>::iterator activeTileItr;
 
 	std::map<Tile*, Texture> tileTextures = {};
 

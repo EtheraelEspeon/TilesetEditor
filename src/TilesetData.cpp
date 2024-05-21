@@ -47,25 +47,34 @@ TilesetData::~TilesetData() {
 	for(auto t : tiles) {
 		delete t;
 	}
-	for(auto t : deletedTiles) {
-		delete t;
-	}
 }
 
 /* ---- Tile Management ---- */
 
-Tile* TilesetData::GetTile(int tileIdx) {
-	return *ItrFromTileIdx(tileIdx);
+std::list<Tile*>::iterator TilesetData::TilesBegin() {
+	return Inst()->tiles.begin();
+}
+std::list<Tile*>::reverse_iterator TilesetData::TilesRBegin() {
+	return Inst()->tiles.rbegin();
+}
+std::list<Tile*>::iterator TilesetData::TilesEnd() {
+	return Inst()->tiles.end();
+}
+std::list<Tile*>::reverse_iterator TilesetData::TilesREnd() {
+	return Inst()->tiles.rend();
 }
 int TilesetData::NumTiles() {
-	return Inst()->tiles.size();
+	int undeletedTiles = 0;
+	auto itr = Inst()->tiles.begin();
+	while(itr != Inst()->tiles.end()) {
+		undeletedTiles += !(*itr)->deleted;
+		itr++;
+	}
+
+	return undeletedTiles;
 }
 void TilesetData::AddTile() {
 	Inst()->tiles.push_back(new Tile());
-}
-
-bool TilesetData::TileIsDeleted(Tile* tileLocation) {
-	return Inst()->deletedTiles.contains(tileLocation);
 }
 
 /* ---- Palette Management ---- */
@@ -81,13 +90,6 @@ void TilesetData::SetColor(ColorIdx colorIdx, Color color) {
 Color TilesetData::GetColor(ColorIdx colorIdx) {
 	if(colorIdx == 0) return {0, 0, 0, 0};
 	return Inst()->palette[colorIdx - 1];
-}
-
-/* ---- Utility ---- */
-std::list<Tile*>::iterator TilesetData::ItrFromTileIdx(int tileIdx) {
-	auto itr = inst->tiles.begin();
-	std::advance(itr, tileIdx);
-	return itr;
 }
 
 /* ---- Undo/Redo Support ---- */
@@ -132,10 +134,6 @@ TilesetData::State::Change::Change(Action traverse, Tile* targetTile) {
 	this->targetTile = targetTile;
 }
 void TilesetData::State::Change::Apply() {
-	if(TileIsDeleted(targetTile)) {
-		Logger::Warning("No mechanism for undeleting tiles");
-	}
-	
 	traverse(targetTile);
 	TileSelector::InvalidateTextureOf(targetTile);
 }

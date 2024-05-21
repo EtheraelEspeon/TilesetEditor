@@ -13,8 +13,9 @@ typedef uint8_t ColorIdx;
 
 class TilesetData;
 struct Tile {
-	
 	ColorIdx GetPixel(int x, int y) const;
+
+	bool deleted = false;
 
 private:
 	Tile();
@@ -34,18 +35,19 @@ public:
 	static void Initialize();
 
 	/* ---- Tile Management ---- */
-
-	/// @brief Marks the tile at tileIdx as deleted
-	static void DeleteTile(int tileIdx);
-	/// @return a pointer to the tile at tileIdx 
-	static Tile* GetTile(int tileIdx);
+	
+	/// @return the begin iterator of the tiles list
+	static std::list<Tile*>::iterator TilesBegin();
+	/// @return the rbegin iterator of the tiles list
+	static std::list<Tile*>::reverse_iterator TilesRBegin();
+	/// @return the end iterator of the tiles list
+	static std::list<Tile*>::iterator TilesEnd();
+	/// @returns the rend iterator of the tiles list
+	static std::list<Tile*>::reverse_iterator TilesREnd();
 	/// @return the number of (non-deleted) tiles
 	static int NumTiles();
 	/// @brief Pushes a tile to the end of the tile list
 	static void AddTile();
-
-	/// @return if a tile at memory location tileLocation is marked as deleted, to check for dangling pointers
-	static bool TileIsDeleted(Tile* tileLocation);
 
 	/* ---- Palette Management ---- */
 
@@ -83,15 +85,9 @@ private:
 	static TilesetData* inst;
 	~TilesetData();
 
-	/* ---- Utility ---- */
-	/// @return an iterator pointing to the tile at tileIdx 
-	static std::list<Tile*>::iterator ItrFromTileIdx(int tileIdx);
-
-
 	/* ---- State ---- */
 	std::array<Color, 15> palette;
 	std::list<Tile*> tiles; // cache locality doesnt really matter for this, i'd rather be able to rearrange elements without invalidating pointers.
-	std::set<Tile*> deletedTiles = {};
 
 	/* ---- Undo/Redo Support ---- */
 	struct State {
