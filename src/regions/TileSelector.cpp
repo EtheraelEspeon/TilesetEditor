@@ -181,7 +181,11 @@ void TileSelector::Update(Rectangle size) {
 
 	if(CheckCollisionRecs(buttonPos, size)) {
 		DrawRectangleRec(buttonPos, Background::rightBody);
-		if(GuiButton(buttonPos, "")) TilesetData::AddTile();
+		if(GuiButton(buttonPos, "")) {
+			TilesetData::AddTile();
+			activeTileItr = TilesetData::TilesEnd();
+			activeTileItr--;
+		}
 		DrawTexturePro(addTileTex, {0, 0, (float)addTileTex.width, (float)addTileTex.height}, buttonPos, {0, 0}, 0, {255, 255, 255, 255});
 	}
 }
